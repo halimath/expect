@@ -117,7 +117,7 @@ As you can see here, there is no need to specify any generic arguments.
 
 # License
 
-Copyright 2021 Alexander Metzner.
+Copyright 2022 Alexander Metzner.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
