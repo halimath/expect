@@ -14,7 +14,7 @@ assertions.
 This module uses golang modules and can be installed with
 
 ```shell
-go get github.com/halimath/assertthat-go
+go get github.com/halimath/assertthat-go@main
 ```
 
 # Usage in tests
