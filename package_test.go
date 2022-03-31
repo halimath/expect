@@ -25,7 +25,7 @@ type Mod interface {
 }
 
 func IsEven[M Mod]() matcher.Matcher[M] {
-	return matcher.Func[M](func(t testing.TB, got M) {
+	return matcher.Func[M](func(t matcher.T, got M) {
 		if got%2 != 0 {
 			t.Errorf("expected %v to be even", got)
 		}
@@ -33,7 +33,7 @@ func IsEven[M Mod]() matcher.Matcher[M] {
 }
 
 func IsDivisableBy[M Mod](d M) matcher.Matcher[M] {
-	return matcher.Func[M](func(t testing.TB, got M) {
+	return matcher.Func[M](func(t matcher.T, got M) {
 		if got%d != 0 {
 			t.Errorf("expected %d to be divisable by %d", got, d)
 		}

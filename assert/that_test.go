@@ -8,10 +8,10 @@ import (
 
 func TestThat_noFailure(t *testing.T) {
 	var m1Called, m2Called int
-	m1 := matcher.Func[interface{}](func(testing.TB, interface{}) {
+	m1 := matcher.Func[interface{}](func(matcher.T, interface{}) {
 		m1Called++
 	})
-	m2 := matcher.Func[interface{}](func(testing.TB, interface{}) {
+	m2 := matcher.Func[interface{}](func(matcher.T, interface{}) {
 		m2Called++
 	})
 
