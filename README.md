@@ -45,7 +45,9 @@ The following table shows the predefined matchers.
 Matcher | Type constraints | Description
 -- | -- | --
 `is.Equal` | `comparable` | Compares given and wanted for equality using the go `==` operator.
-`is.DeepEqual` | `any` | Compares given and wanted for deep equality using [github.com/go-test/deep](https://github.com/go-test/deep)
+`is.DeepEqual` | `any` | Compares given and wanted for deep equality using reflection.
+`is.NoError` | `error` | Asserts that the given error value is `nil`.
+`is.Error` | `error` | Asserts that the given error is a non-`nil` error that is of the given target error by using `errors.Is` 
 
 ## Defining you own matcher
 
