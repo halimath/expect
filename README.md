@@ -44,6 +44,8 @@ The following table shows the predefined matchers.
 
 Matcher | Type constraints | Description
 -- | -- | --
+`is.Nil` | `any` | Asserts a pointer to `nil`
+`is.NotNil` | `any` | Asserts a pointer to be non `nil`
 `is.Equal` | `comparable` | Compares given and wanted for equality using the go `==` operator.
 `is.DeepEqual` | `any` | Compares given and wanted for deep equality using reflection.
 `is.NoError` | `error` | Asserts that the given error value is `nil`.
