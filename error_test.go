@@ -1,4 +1,4 @@
-package is
+package expect
 
 import (
 	"errors"
@@ -8,20 +8,20 @@ import (
 )
 
 func TestNoError(t *testing.T) {
-	var tm tMock
+	var tm contextMock
 
 	NoError().Match(&tm, nil)
 	NoError().Match(&tm, errors.New("failed"))
 
-	if !reflect.DeepEqual(tm, tMock{
-		errors: []string{"expected no error but got failed"},
+	if !reflect.DeepEqual(tm, contextMock{
+		failures: []string{"expected no error but got failed"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}
 }
 
 func TestError(t *testing.T) {
-	var tm tMock
+	var tm contextMock
 
 	err := errors.New("failed")
 
@@ -30,8 +30,8 @@ func TestError(t *testing.T) {
 	Error(err).Match(&tm, err)
 	Error(err).Match(&tm, fmt.Errorf("wrapped %w", err))
 
-	if !reflect.DeepEqual(tm, tMock{
-		errors: []string{
+	if !reflect.DeepEqual(tm, contextMock{
+		failures: []string{
 			"expected an error with target failed but got nil",
 			"expected an error with target failed but got other",
 		},

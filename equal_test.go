@@ -1,4 +1,4 @@
-package is
+package expect
 
 import (
 	"reflect"
@@ -6,26 +6,26 @@ import (
 )
 
 func TestEqual(t *testing.T) {
-	var tm tMock
+	var tm contextMock
 
 	Equal("foo").Match(&tm, "foo")
 	Equal("foo").Match(&tm, "bar")
 
-	if !reflect.DeepEqual(tm, tMock{
-		errors: []string{"expected foo to equal bar"},
+	if !reflect.DeepEqual(tm, contextMock{
+		failures: []string{"expected foo to equal bar"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}
 }
 
 func TestDeepEqual(t *testing.T) {
-	var tm tMock
+	var tm contextMock
 
 	DeepEqual("foo").Match(&tm, "foo")
 	DeepEqual("foo").Match(&tm, "bar")
 
-	if !reflect.DeepEqual(tm, tMock{
-		errors: []string{"values are not deeply equal: want\n\"foo\" got\n\"bar\""},
+	if !reflect.DeepEqual(tm, contextMock{
+		failures: []string{"values are not deeply equal: want\n\"foo\" got\n\"bar\""},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}

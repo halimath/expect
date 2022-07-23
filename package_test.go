@@ -1,51 +1,58 @@
-package asserthat_test
+package expect_test
 
 import (
 	"testing"
 
-	"github.com/halimath/assertthat-go/assert"
-	"github.com/halimath/assertthat-go/is"
-	"github.com/halimath/assertthat-go/matcher"
+	"github.com/halimath/expect-go"
 )
 
 func TestEqual(t *testing.T) {
 	got := "something"
 
-	assert.That(t, got, is.Equal("something"))
+	expect.That(t, got).
+		Is(expect.Equal("something"))
+}
+
+func TestEqual_failNow(t *testing.T) {
+	got := "something"
+
+	expect.That(t, got, expect.StopImmediately{}).
+		Is(expect.Equal("something"))
 }
 
 func TestDeepEqual(t *testing.T) {
 	got := []string{"foo", "bar"}
 
-	assert.That(t, got, is.DeepEqual([]string{"foo", "bar"}))
+	expect.That(t, got).
+		Is(expect.DeepEqual([]string{"foo", "bar"}))
 }
 
 type Mod interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64
 }
 
-func IsEven[M Mod]() matcher.Matcher[M] {
-	return matcher.Func[M](func(t matcher.T, got M) {
+func Even[M Mod]() expect.Matcher[M] {
+	return expect.MatcherFunc[M](func(ctx expect.Context, got M) {
 		if got%2 != 0 {
-			t.Errorf("expected %v to be even", got)
+			ctx.Failf("expected %v to be even", got)
 		}
 	})
 }
 
-func IsDivisableBy[M Mod](d M) matcher.Matcher[M] {
-	return matcher.Func[M](func(t matcher.T, got M) {
+func DivisableBy[M Mod](d M) expect.Matcher[M] {
+	return expect.MatcherFunc[M](func(ctx expect.Context, got M) {
 		if got%d != 0 {
-			t.Errorf("expected %d to be divisable by %d", got, d)
+			ctx.Failf("expected %d to be divisable by %d", got, d)
 		}
 	})
 }
 
 func TestCustomMatcher(t *testing.T) {
 	var i int = 22
-	assert.That(t, i, IsEven[int]())
+	expect.That(t, i).Is(Even[int]())
 }
 
 func TestCustomMatcher2(t *testing.T) {
 	var i int = 22
-	assert.That(t, i, IsDivisableBy(2))
+	expect.That(t, i).Is(DivisableBy(2))
 }
