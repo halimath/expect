@@ -58,8 +58,8 @@ Matcher | Type constraints | Description
 `DeepEqual` | `any` | Compares given and wanted for deep equality using reflection.
 `NoError` | `error` | Expects the given error value to be `nil`.
 `Error` | `error` | Expects that the given error to be a non-`nil` error that is of the given target error by using `errors.Is` 
-`HTTPStatus` | `httptest.ResponseRecorder` | Expects that the response recorded a given status code
-`HTTPHeader` | `*http.Request | httptest.ResponseRecorder` | Expects that the HTTP entity conatins a given header with value
+`HTTPStatus` | `*httptest.ResponseRecorder` | Expects that the response recorded a given status code
+`HTTPHeader` | `*http.Request` or `*httptest.ResponseRecorder` | Expects that the HTTP entity conatins a given header with value
 
 ## Defining you own matcher
 
