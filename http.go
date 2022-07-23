@@ -8,7 +8,7 @@ import (
 
 // WithHeader defines a type constraint to use the HTTPHeader
 type WithHeader interface {
-	*http.Request | httptest.ResponseRecorder
+	*http.Request | *httptest.ResponseRecorder
 }
 
 // HTTPHeader returns a Matcher that asserts that the given HTTP entity contains a header with a given value.
@@ -20,7 +20,7 @@ func HTTPHeader[T WithHeader](name, value string) Matcher[T] {
 		switch x := g.(type) {
 		case *http.Request:
 			header = x.Header
-		case http.ResponseWriter:
+		case *httptest.ResponseRecorder:
 			header = x.Header()
 		default:
 			panic(fmt.Sprintf("unexpected HTTP entity: %v", got))
