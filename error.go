@@ -4,20 +4,26 @@ import (
 	"errors"
 )
 
-func Error(target error) Matcher[error] {
-	return MatcherFunc[error](func(ctx Context, got error) {
+// Error matches go to contain target in its chain. The check is performed
+// using errors.Is.
+func Error(target error) Matcher {
+	return MatcherFunc(func(ctx Context, got any) {
 		if got == nil {
 			ctx.Failf("expected an error with target %v but got nil", target)
-		} else if !errors.Is(got, target) {
+			return
+		}
+
+		err, ok := got.(error)
+		if !ok {
+			ctx.Failf("expected an error but got %T", got)
+			return
+		}
+
+		if !errors.Is(err, target) {
 			ctx.Failf("expected an error with target %v but got %v", target, got)
 		}
 	})
 }
 
-func NoError() Matcher[error] {
-	return MatcherFunc[error](func(ctx Context, got error) {
-		if got != nil {
-			ctx.Failf("expected no error but got %v", got)
-		}
-	})
-}
+// NoError is an alias for Nil testing an error value to be nil.
+var NoError = Nil

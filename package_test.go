@@ -27,22 +27,58 @@ func TestDeepEqual(t *testing.T) {
 		Is(expect.DeepEqual([]string{"foo", "bar"}))
 }
 
+func TestLen_string(t *testing.T) {
+	got := "hello"
+	expect.That(t, got).
+		Is(expect.Len(5))
+}
+
+func TestMap(t *testing.T) {
+	got := map[string]int{
+		"foo": 1,
+		"bar": 2,
+	}
+
+	expect.That(t, got).
+		Is(expect.Len(2)).
+		Is(expect.MapContaining("foo", 1))
+}
+
+func TestSlice(t *testing.T) {
+	got := []int{1, 2, 3}
+	expect.That(t, got).
+		Is(expect.Len(3)).
+		Is(expect.SliceContainingInOrder(1, 3))
+}
+
 type Mod interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64
 }
 
-func Even[M Mod]() expect.Matcher[M] {
-	return expect.MatcherFunc[M](func(ctx expect.Context, got M) {
-		if got%2 != 0 {
-			ctx.Failf("expected %v to be even", got)
+func Even[M Mod]() expect.Matcher {
+	return expect.MatcherFunc(func(ctx expect.Context, got any) {
+		g, ok := got.(M)
+		if !ok {
+			ctx.Failf("expected <%v> to be of type <%T>", got, g)
+			return
+		}
+
+		if g%2 != 0 {
+			ctx.Failf("expected <%v> to be even", got)
 		}
 	})
 }
 
-func DivisableBy[M Mod](d M) expect.Matcher[M] {
-	return expect.MatcherFunc[M](func(ctx expect.Context, got M) {
-		if got%d != 0 {
-			ctx.Failf("expected %d to be divisable by %d", got, d)
+func DivisableBy[M Mod](d M) expect.Matcher {
+	return expect.MatcherFunc(func(ctx expect.Context, got any) {
+		g, ok := got.(M)
+		if !ok {
+			ctx.Failf("expected <%v> to be of type <%T>", got, g)
+			return
+		}
+
+		if g%d != 0 {
+			ctx.Failf("expected <%v> to be divisable by <%v>", got, d)
 		}
 	})
 }

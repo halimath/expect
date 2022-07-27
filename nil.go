@@ -1,15 +1,24 @@
 package expect
 
-func Nil[T any]() Matcher[*T] {
-	return MatcherFunc[*T](func(ctx Context, got *T) {
+import "reflect"
+
+// Nil matches a value to be nil.
+func Nil() Matcher {
+	return MatcherFunc(func(ctx Context, got any) {
 		if got != nil {
-			ctx.Failf("expected %v to be nil", *got)
+			v := reflect.ValueOf(got)
+			if v.Kind() == reflect.Pointer {
+				v = v.Elem()
+			}
+
+			ctx.Failf("expected <%v> to be nil", v)
 		}
 	})
 }
 
-func NotNil[T any]() Matcher[*T] {
-	return MatcherFunc[*T](func(ctx Context, got *T) {
+// NotNil expects got to be non nil.
+func NotNil() Matcher {
+	return MatcherFunc(func(ctx Context, got any) {
 		if got == nil {
 			ctx.Failf("expected value to be not nil")
 		}

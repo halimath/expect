@@ -15,16 +15,16 @@ type Context interface {
 }
 
 // Matcher defines the interface implemented to execute a single expectation.
-type Matcher[T any] interface {
+type Matcher interface {
 	// Match is called with a Context interface and the given value got. Implementations should perform
 	// matching logic and call one of the fail methods from Context to mark the test as failed.
-	Match(ctx Context, got T)
+	Match(ctx Context, got any)
 }
 
 // MatcherFunc is a convenience type that allows matchers to be implemented using a single function.
-type MatcherFunc[T any] func(ctx Context, got T)
+type MatcherFunc func(ctx Context, got any)
 
-func (f MatcherFunc[T]) Match(ctx Context, got T) {
+func (f MatcherFunc) Match(ctx Context, got any) {
 	f(ctx, got)
 }
 
@@ -85,14 +85,14 @@ func (StopImmediately) clause() {}
 
 // Chain defines an intermediate type used to chain expectations on a single type. Normally, test code will
 // not use this type but instead call the chaining methods to invoce Matchers.
-type Chain[T any] struct {
-	got T
+type Chain struct {
+	got any
 	ctx Context
 }
 
 // That starts a new expectation chain using got as the value to expect things from. It uses t to interact
 // with the running test.
-func That[T any](t TB, got T, clauses ...Clause) *Chain[T] {
+func That(t TB, got any, clauses ...Clause) *Chain {
 	var ctx Context = &failContext{t: t}
 
 	for _, clause := range clauses {
@@ -101,25 +101,25 @@ func That[T any](t TB, got T, clauses ...Clause) *Chain[T] {
 		}
 	}
 
-	return &Chain[T]{
+	return &Chain{
 		got: got,
 		ctx: ctx,
 	}
 }
 
 // Is adds m to e providing a fluent API.
-func (e *Chain[T]) Is(m Matcher[T]) *Chain[T] { return e.runMatcher(m) }
+func (e *Chain) Is(m Matcher) *Chain { return e.runMatcher(m) }
 
 // Has adds m to e providing a fluent API.
-func (e *Chain[T]) Has(m Matcher[T]) *Chain[T] { return e.runMatcher(m) }
+func (e *Chain) Has(m Matcher) *Chain { return e.runMatcher(m) }
 
 // And adds m to e providing a fluent API.
-func (e *Chain[T]) And(m Matcher[T]) *Chain[T] { return e.runMatcher(m) }
+func (e *Chain) And(m Matcher) *Chain { return e.runMatcher(m) }
 
 // Matches adds m to e providing a fluent API.
-func (e *Chain[T]) Matches(m Matcher[T]) *Chain[T] { return e.runMatcher(m) }
+func (e *Chain) Matches(m Matcher) *Chain { return e.runMatcher(m) }
 
-func (e *Chain[T]) runMatcher(m Matcher[T]) *Chain[T] {
+func (e *Chain) runMatcher(m Matcher) *Chain {
 	m.Match(e.ctx, e.got)
 	return e
 }

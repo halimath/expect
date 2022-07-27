@@ -58,8 +58,10 @@ Matcher | Type constraints | Description
 `DeepEqual` | `any` | Compares given and wanted for deep equality using reflection.
 `NoError` | `error` | Expects the given error value to be `nil`.
 `Error` | `error` | Expects that the given error to be a non-`nil` error that is of the given target error by using `errors.Is` 
-`HTTPStatus` | `*httptest.ResponseRecorder` | Expects that the response recorded a given status code
-`HTTPHeader` | `*http.Request` or `*httptest.ResponseRecorder` | Expects that the HTTP entity conatins a given header with value
+`Len` | `string`, `array`, `slice`, `map`, `channel` | Expects the length of the given value to equal a given length
+`MapContaining` | `map` | Expects the given value to be a map containing a given key, value pair
+`SliceContaining` | `slice` | Expects the given value to be a slice containing a given set of values in any order
+`SliceContainingInOrder` | `slice` | Expects the given value to be a slice containing a given list of values in given order
 
 ## Defining you own matcher
 
@@ -76,10 +78,16 @@ type Mod interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64
 }
 
-func Even[M Mod]() expect.Matcher[M] {
-	return expect.MatcherFunc[M](func(ctx expect.Context, got M) {
-		if got%2 != 0 {
-			ctx.Failf("expected %v to be even", got)
+func Even[M Mod]() expect.Matcher {
+	return expect.MatcherFunc(func(ctx expect.Context, got any) {
+		g, ok := got.(M)
+		if !ok {
+			ctx.Failf("expected <%v> to be of type <%T>", got, g)
+			return
+		}
+
+		if g%2 != 0 {
+			ctx.Failf("expected <%v> to be even", got)
 		}
 	})
 }
@@ -101,10 +109,16 @@ interfer the type argument based on the context it is used in.
 We can rewrite this matcher to be a little bit more versatile, we get the following:
 
 ```go
-func DivisableBy[M Mod](d M) expect.Matcher[M] {
-	return expect.MatcherFunc[M](func(ctx expect.Context, got M) {
-		if got%d != 0 {
-			ctx.Failf("expected %d to be divisable by %d", got, d)
+func DivisableBy[M Mod](d M) expect.Matcher {
+	return expect.MatcherFunc(func(ctx expect.Context, got any) {
+		g, ok := got.(M)
+		if !ok {
+			ctx.Failf("expected <%v> to be of type <%T>", got, g)
+			return
+		}
+
+		if g%d != 0 {
+			ctx.Failf("expected <%v> to be divisable by <%v>", got, d)
 		}
 	})
 }
@@ -125,12 +139,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licensassertthat-go
-assertthat-go
-assertthat-go
-assertthat-go
-assertthat-go
-assertthat-go
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.

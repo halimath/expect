@@ -14,7 +14,7 @@ func TestNoError(t *testing.T) {
 	NoError().Match(&tm, errors.New("failed"))
 
 	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{"expected no error but got failed"},
+		failures: []string{"expected <{failed}> to be nil"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}

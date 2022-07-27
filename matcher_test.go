@@ -5,7 +5,7 @@ import (
 )
 
 func TestFunc(t *testing.T) {
-	m := MatcherFunc[string](func(ctx Context, got string) {
+	m := MatcherFunc(func(ctx Context, got any) {
 	})
 
 	ctx := &contextMock{}

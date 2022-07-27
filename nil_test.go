@@ -9,11 +9,11 @@ func TestNil(t *testing.T) {
 	var tm contextMock
 
 	s := "foo"
-	Nil[string]().Match(&tm, &s)
-	Nil[any]().Match(&tm, nil)
+	Nil().Match(&tm, &s)
+	Nil().Match(&tm, nil)
 
 	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{"expected foo to be nil"},
+		failures: []string{"expected <foo> to be nil"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}
@@ -23,8 +23,8 @@ func TestNotNil(t *testing.T) {
 	var tm contextMock
 
 	s := "foo"
-	NotNil[string]().Match(&tm, &s)
-	NotNil[any]().Match(&tm, nil)
+	NotNil().Match(&tm, &s)
+	NotNil().Match(&tm, nil)
 
 	if !reflect.DeepEqual(tm, contextMock{
 		failures: []string{"expected value to be not nil"},
