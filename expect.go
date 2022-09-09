@@ -5,8 +5,6 @@ package expect
 
 import (
 	"fmt"
-	"runtime"
-	"strings"
 )
 
 // Context defines the context used by Matcher to interact with the running test (i.e. failing it.). Using the
@@ -18,6 +16,9 @@ type Context interface {
 
 	// Failf fails the test producing a message by formatting args according to format.
 	Failf(format string, args ...any)
+
+	// T provides access to the underlyings testing.TB.
+	T() TB
 }
 
 // Matcher defines the interface implemented to execute a single expectation.
@@ -31,6 +32,7 @@ type Matcher interface {
 type MatcherFunc func(ctx Context, got any)
 
 func (f MatcherFunc) Match(ctx Context, got any) {
+	ctx.T().Helper()
 	f(ctx, got)
 }
 
@@ -43,6 +45,8 @@ type TB interface {
 	Fail()
 	// FailNow marks the test as failed and stops execution.
 	FailNow()
+	// Helper marks the invoking function as a helper function.
+	Helper()
 }
 
 type failFunc func()
@@ -56,42 +60,19 @@ type context struct {
 var _ Context = &context{}
 
 func (ctx *context) Fail(args ...any) {
-	loc := sourceLocation()
+	ctx.t.Helper()
 	msg := fmt.Sprint(args...)
-	ctx.t.Log(msg + "\nat " + loc)
+	ctx.t.Log(msg)
 	ctx.fail()
 }
 
 func (ctx *context) Failf(format string, args ...any) {
+	ctx.t.Helper()
 	ctx.Fail(fmt.Sprintf(format, args...))
 }
 
-func sourceLocation() string {
-	var pc [50]uintptr
-	n := runtime.Callers(0, pc[:])
-	if n == 0 {
-		panic("expect-go: zero callers found")
-	}
-	frames := runtime.CallersFrames(pc[:n])
-
-	for {
-		f, ok := frames.Next()
-		if !ok {
-			break
-		}
-
-		if strings.Contains(f.File, "runtime") {
-			continue
-		}
-
-		if strings.Contains(f.File, "expect-go") {
-			continue
-		}
-
-		return fmt.Sprintf("%s:%d", f.File, f.Line)
-	}
-
-	return ""
+func (ctx *context) T() TB {
+	return ctx.t
 }
 
 type Clause interface {
@@ -116,6 +97,7 @@ type Chain struct {
 // ExpectThat starts a new expectation chain using got as the value to expect things from. It uses t to interact
 // with the running test.
 func ExpectThat(t TB, got any, clauses ...Clause) *Chain {
+	t.Helper()
 	ctx := &context{
 		t:    t,
 		fail: t.Fail,
@@ -137,18 +119,19 @@ func ExpectThat(t TB, got any, clauses ...Clause) *Chain {
 var That = ExpectThat
 
 // Is adds m to e providing a fluent API.
-func (e *Chain) Is(m Matcher) *Chain { return e.runMatcher(m) }
+func (e *Chain) Is(m Matcher) *Chain { e.ctx.T().Helper(); return e.runMatcher(m) }
 
 // Has adds m to e providing a fluent API.
-func (e *Chain) Has(m Matcher) *Chain { return e.runMatcher(m) }
+func (e *Chain) Has(m Matcher) *Chain { e.ctx.T().Helper(); return e.runMatcher(m) }
 
 // And adds m to e providing a fluent API.
-func (e *Chain) And(m Matcher) *Chain { return e.runMatcher(m) }
+func (e *Chain) And(m Matcher) *Chain { e.ctx.T().Helper(); return e.runMatcher(m) }
 
 // Matches adds m to e providing a fluent API.
-func (e *Chain) Matches(m Matcher) *Chain { return e.runMatcher(m) }
+func (e *Chain) Matches(m Matcher) *Chain { e.ctx.T().Helper(); return e.runMatcher(m) }
 
 func (e *Chain) runMatcher(m Matcher) *Chain {
+	e.ctx.T().Helper()
 	m.Match(e.ctx, e.got)
 	return e
 }

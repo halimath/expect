@@ -8,6 +8,8 @@ import (
 // using errors.Is.
 func Error(target error) Matcher {
 	return MatcherFunc(func(ctx Context, got any) {
+		ctx.T().Helper()
+
 		if got == nil {
 			ctx.Failf("expected an error with target %v but got nil", target)
 			return

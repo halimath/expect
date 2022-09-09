@@ -8,6 +8,8 @@ import (
 // Duplicates in wants are not considered to be contained multiple times in the given slice.
 func SliceContaining[T comparable](wants ...T) Matcher {
 	return MatcherFunc(func(ctx Context, got any) {
+		ctx.T().Helper()
+
 		s, ok := got.([]T)
 		if !ok {
 			ctx.Failf("expected value of type %T but got %T", s, got)
@@ -35,6 +37,8 @@ func SliceContaining[T comparable](wants ...T) Matcher {
 // in the same order they are given as wants.
 func SliceContainingInOrder[T comparable](wants ...T) Matcher {
 	return MatcherFunc(func(ctx Context, got any) {
+		ctx.T().Helper()
+
 		s, ok := got.([]T)
 		if !ok {
 			ctx.Failf("expected value of type %T but got %T", s, got)

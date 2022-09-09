@@ -2,6 +2,8 @@ package expect
 
 func MapContaining[K, V comparable](key K, val V) Matcher {
 	return MatcherFunc(func(ctx Context, got any) {
+		ctx.T().Helper()
+
 		m, ok := got.(map[K]V)
 		if !ok {
 			ctx.Failf("expected %T but got %T", m, got)

@@ -11,6 +11,7 @@ import (
 // nested structures.
 func DeepEqual[T any](want T) Matcher {
 	return MatcherFunc(func(ctx Context, got any) {
+		ctx.T().Helper()
 		if !reflect.DeepEqual(want, got) {
 			ws := fmt.Sprintf("%v", want)
 			gs := fmt.Sprintf("%v", got)
@@ -45,6 +46,7 @@ func DeepEqual[T any](want T) Matcher {
 // types that satisfy comparable.
 func Equal[G comparable](want G) Matcher {
 	return MatcherFunc(func(ctx Context, got any) {
+		ctx.T().Helper()
 		if want != got {
 			ctx.Failf("values are not equal\nwant: %v\ngot:  %v", want, got)
 		}
