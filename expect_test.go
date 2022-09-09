@@ -43,9 +43,7 @@ func TestContext(t *testing.T) {
 	ctx.Fail("test")
 
 	got := m.buf.String()
-	want := "expect_test.go:43: test\n"
-
-	if got != want {
-		t.Errorf("expected '%s' but got '%s'", want, got)
+	if !strings.HasPrefix(got, "test\nat ") {
+		t.Errorf("expected message to start with 'test\\nat ' but got '%s'", got)
 	}
 }

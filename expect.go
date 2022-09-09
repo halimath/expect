@@ -5,8 +5,8 @@ package expect
 
 import (
 	"fmt"
-	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // Context defines the context used by Matcher to interact with the running test (i.e. failing it.). Using the
@@ -58,7 +58,7 @@ var _ Context = &context{}
 func (ctx *context) Fail(args ...any) {
 	loc := sourceLocation()
 	msg := fmt.Sprint(args...)
-	ctx.t.Log(loc + ": " + msg)
+	ctx.t.Log(msg + "\nat " + loc)
 	ctx.fail()
 }
 
@@ -68,17 +68,30 @@ func (ctx *context) Failf(format string, args ...any) {
 
 func sourceLocation() string {
 	var pc [50]uintptr
-	n := runtime.Callers(3, pc[:])
+	n := runtime.Callers(0, pc[:])
 	if n == 0 {
 		panic("expect-go: zero callers found")
 	}
 	frames := runtime.CallersFrames(pc[:n])
-	f, ok := frames.Next()
-	if !ok {
-		panic("expect-go: zero callers found")
+
+	for {
+		f, ok := frames.Next()
+		if !ok {
+			break
+		}
+
+		if strings.Contains(f.File, "runtime") {
+			continue
+		}
+
+		if strings.Contains(f.File, "expect-go") {
+			continue
+		}
+
+		return fmt.Sprintf("%s:%d", f.File, f.Line)
 	}
 
-	return fmt.Sprintf("%s:%d", filepath.Base(f.File), f.Line)
+	return ""
 }
 
 type Clause interface {
