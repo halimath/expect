@@ -17,7 +17,7 @@ func DeepEqual[T any](want T) Matcher {
 func Equal[G comparable](want G) Matcher {
 	return MatcherFunc(func(ctx Context, got any) {
 		if want != got {
-			ctx.Failf("expected %v to equal %v", want, got)
+			ctx.Failf("values are not equal: want\n%v got\n%v", want, got)
 		}
 	})
 }

@@ -12,7 +12,7 @@ func TestEqual(t *testing.T) {
 	Equal("foo").Match(&tm, "bar")
 
 	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{"expected foo to equal bar"},
+		failures: []string{"values are not equal: want\nfoo got\nbar"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}
