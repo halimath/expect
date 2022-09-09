@@ -19,11 +19,20 @@ go get github.com/halimath/expect-go@main
 
 # Usage in tests
 
+`expect-go` is intended to be "dot imported" into your tests. This makes all the exported functions and 
+matchers directly available leading to very fluent and readable expectations:
+
+```go
+import . "github.com/halimath/expect-go"
+```
+
+All following example assume the dot import.
+
 The following example demonstates the basic use:
 
 ```go
-expect.That(t, got).
-	Is(expect.DeepEqual(MyStruc{
+ExpectThat(t, got).
+	Is(DeepEqual(MyStruc{
     	Foo: "bar",
     	Spam: "eggs",
 	}))
@@ -34,12 +43,12 @@ value to run expections on. Then, use one of the chaining methods `Is`, `Has`, `
 matcher to the chain. `expect-go` provides a set of predefined matchers (see below) but you can also define
 your own matchers.
 
-If you want to stop the test's execution on the first failing expectation, provide the `StopImmediate` clause
-to `That`: 
+If you want to stop the test's execution on the first failing expectation, provide the `WithStopImmediate()`
+clause to `ExpectThat`:
 
 ```go
-expect.That(t, got, expect.StopImmediately{}).
-	Is(expect.DeepEqual(MyStruc{
+ExpectThat(t, got, WithStopImmediately()).
+	Is(DeepEqual(MyStruc{
     	Foo: "bar",
     	Spam: "eggs",
 	}))
@@ -78,8 +87,8 @@ type Mod interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64
 }
 
-func Even[M Mod]() expect.Matcher {
-	return expect.MatcherFunc(func(ctx expect.Context, got any) {
+func Even[M Mod]() Matcher {
+	return MatcherFunc(func(ctx Context, got any) {
 		g, ok := got.(M)
 		if !ok {
 			ctx.Failf("expected <%v> to be of type <%T>", got, g)
@@ -94,7 +103,7 @@ func Even[M Mod]() expect.Matcher {
 
 func TestCustomMatcher(t *testing.T) {
 	var i int = 22
-	expect.That(t, i).Is(Even[int]())
+	ExpectThat(t, i).Is(Even[int]())
 }
 ```
 
@@ -109,8 +118,8 @@ interfer the type argument based on the context it is used in.
 We can rewrite this matcher to be a little bit more versatile, we get the following:
 
 ```go
-func DivisableBy[M Mod](d M) expect.Matcher {
-	return expect.MatcherFunc(func(ctx expect.Context, got any) {
+func DivisableBy[M Mod](d M) Matcher {
+	return MatcherFunc(func(ctx Context, got any) {
 		g, ok := got.(M)
 		if !ok {
 			ctx.Failf("expected <%v> to be of type <%T>", got, g)
@@ -125,7 +134,7 @@ func DivisableBy[M Mod](d M) expect.Matcher {
 
 func TestCustomMatcher2(t *testing.T) {
 	var i int = 22
-	expect.That(t, i).Is(DivisableBy(2))
+	ExpectThat(t, i).Is(DivisableBy(2))
 }
 ```
 

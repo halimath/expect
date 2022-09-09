@@ -3,34 +3,34 @@ package expect_test
 import (
 	"testing"
 
-	"github.com/halimath/expect-go"
+	. "github.com/halimath/expect-go"
 )
 
-func TestEqual(t *testing.T) {
+func TestEqual_string(t *testing.T) {
 	got := "something"
 
-	expect.That(t, got).
-		Is(expect.Equal("something"))
+	ExpectThat(t, got).
+		Is(Equal("something"))
 }
 
 func TestEqual_failNow(t *testing.T) {
 	got := "something"
 
-	expect.That(t, got, expect.StopImmediately{}).
-		Is(expect.Equal("something"))
+	ExpectThat(t, got, WithStopImmediately()).
+		Is(Equal("something"))
 }
 
-func TestDeepEqual(t *testing.T) {
+func TestDeepEqual_strings(t *testing.T) {
 	got := []string{"foo", "bar"}
 
-	expect.That(t, got).
-		Is(expect.DeepEqual([]string{"foo", "bar"}))
+	ExpectThat(t, got).
+		Is(DeepEqual([]string{"foo", "bar"}))
 }
 
 func TestLen_string(t *testing.T) {
 	got := "hello"
-	expect.That(t, got).
-		Is(expect.Len(5))
+	ExpectThat(t, got).
+		Has(Len(5))
 }
 
 func TestMap(t *testing.T) {
@@ -39,24 +39,24 @@ func TestMap(t *testing.T) {
 		"bar": 2,
 	}
 
-	expect.That(t, got).
-		Is(expect.Len(2)).
-		Is(expect.MapContaining("foo", 1))
+	ExpectThat(t, got).
+		Is(MapContaining("foo", 1)).
+		Has(Len(2))
 }
 
 func TestSlice(t *testing.T) {
 	got := []int{1, 2, 3}
-	expect.That(t, got).
-		Is(expect.Len(3)).
-		Is(expect.SliceContainingInOrder(1, 3))
+	ExpectThat(t, got).
+		Has(Len(3)).
+		Is(SliceContainingInOrder(1, 3))
 }
 
 type Mod interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64
 }
 
-func Even[M Mod]() expect.Matcher {
-	return expect.MatcherFunc(func(ctx expect.Context, got any) {
+func Even[M Mod]() Matcher {
+	return MatcherFunc(func(ctx Context, got any) {
 		g, ok := got.(M)
 		if !ok {
 			ctx.Failf("expected <%v> to be of type <%T>", got, g)
@@ -69,8 +69,8 @@ func Even[M Mod]() expect.Matcher {
 	})
 }
 
-func DivisableBy[M Mod](d M) expect.Matcher {
-	return expect.MatcherFunc(func(ctx expect.Context, got any) {
+func DivisableBy[M Mod](d M) Matcher {
+	return MatcherFunc(func(ctx Context, got any) {
 		g, ok := got.(M)
 		if !ok {
 			ctx.Failf("expected <%v> to be of type <%T>", got, g)
@@ -85,10 +85,10 @@ func DivisableBy[M Mod](d M) expect.Matcher {
 
 func TestCustomMatcher(t *testing.T) {
 	var i int = 22
-	expect.That(t, i).Is(Even[int]())
+	ExpectThat(t, i).Is(Even[int]())
 }
 
 func TestCustomMatcher2(t *testing.T) {
 	var i int = 22
-	expect.That(t, i).Is(DivisableBy(2))
+	ExpectThat(t, i).Is(DivisableBy(2))
 }
