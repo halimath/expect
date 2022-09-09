@@ -3,6 +3,12 @@
 // custom assertions/expectations by implementing the Matcher interface.
 package expect
 
+import (
+	"fmt"
+	"path/filepath"
+	"runtime"
+)
+
 // Context defines the context used by Matcher to interact with the running test (i.e. failing it.). Using the
 // Context interface Matchers can reject values with a custom message which will fail the test either
 // immediately or deferred, depending on the surrounding call.
@@ -33,55 +39,59 @@ func (f MatcherFunc) Match(ctx Context, got any) {
 type TB interface {
 	// Log logs a single message produced from args.
 	Log(args ...any)
-	// Logf logs a single message produced by formatting args according to format.
-	Logf(format string, args ...any)
 	// Fail marks the test as failed but continues execution.
 	Fail()
 	// FailNow marks the test as failed and stops execution.
 	FailNow()
 }
 
-// failContext implements Context with deferred test failure.
-type failContext struct {
-	t TB
+type failFunc func()
+
+// context implements Context. It calls fail to markt the test as failed.
+type context struct {
+	t    TB
+	fail failFunc
 }
 
-var _ Context = &failContext{}
+var _ Context = &context{}
 
-func (ctx *failContext) Fail(args ...any) {
-	ctx.t.Log(args...)
-	ctx.t.Fail()
+func (ctx *context) Fail(args ...any) {
+	loc := sourceLocation()
+	msg := fmt.Sprint(args...)
+	ctx.t.Log(loc + ": " + msg)
+	ctx.fail()
 }
 
-func (ctx *failContext) Failf(format string, args ...any) {
-	ctx.t.Logf(format, args...)
-	ctx.t.Fail()
+func (ctx *context) Failf(format string, args ...any) {
+	ctx.Fail(fmt.Sprintf(format, args...))
 }
 
-// failNowContext implements Context with immediate test failure.
-type failNowContext struct {
-	t TB
-}
+func sourceLocation() string {
+	var pc [50]uintptr
+	n := runtime.Callers(3, pc[:])
+	if n == 0 {
+		panic("expect-go: zero callers found")
+	}
+	frames := runtime.CallersFrames(pc[:n])
+	f, ok := frames.Next()
+	if !ok {
+		panic("expect-go: zero callers found")
+	}
 
-var _ Context = &failNowContext{}
-
-func (ctx *failNowContext) Fail(args ...any) {
-	ctx.t.Log(args...)
-	ctx.t.FailNow()
-}
-
-func (ctx *failNowContext) Failf(format string, args ...any) {
-	ctx.t.Logf(format, args...)
-	ctx.t.FailNow()
+	return fmt.Sprintf("%s:%d", filepath.Base(f.File), f.Line)
 }
 
 type Clause interface {
 	clause()
 }
 
-type StopImmediately struct{}
+type stopImmediately struct{}
 
-func (StopImmediately) clause() {}
+func (stopImmediately) clause() {}
+
+func WithStopImmediately() Clause {
+	return stopImmediately{}
+}
 
 // Chain defines an intermediate type used to chain expectations on a single type. Normally, test code will
 // not use this type but instead call the chaining methods to invoce Matchers.
@@ -90,14 +100,17 @@ type Chain struct {
 	ctx Context
 }
 
-// That starts a new expectation chain using got as the value to expect things from. It uses t to interact
+// ExpectThat starts a new expectation chain using got as the value to expect things from. It uses t to interact
 // with the running test.
-func That(t TB, got any, clauses ...Clause) *Chain {
-	var ctx Context = &failContext{t: t}
+func ExpectThat(t TB, got any, clauses ...Clause) *Chain {
+	ctx := &context{
+		t:    t,
+		fail: t.Fail,
+	}
 
 	for _, clause := range clauses {
-		if _, ok := clause.(StopImmediately); ok {
-			ctx = &failNowContext{t: t}
+		if _, ok := clause.(stopImmediately); ok {
+			ctx.fail = t.FailNow
 		}
 	}
 
@@ -106,6 +119,9 @@ func That(t TB, got any, clauses ...Clause) *Chain {
 		ctx: ctx,
 	}
 }
+
+// That is an alias for ExpectThat intended to be used when the package is not dot imported.
+var That = ExpectThat
 
 // Is adds m to e providing a fluent API.
 func (e *Chain) Is(m Matcher) *Chain { return e.runMatcher(m) }
