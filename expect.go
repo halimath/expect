@@ -36,17 +36,28 @@ func (f MatcherFunc) Match(ctx Context, got any) {
 	f(ctx, got)
 }
 
-// TB defines the interface for interacting the a running test. It is a simplification of testing.TB defining
-// only what is needed to use the expect library.
+// TB is basically a copy from testing.TB. It is used here to allow other implementations (testing.TB
+// contains an unexported private method) to be used (i.e. mocks while testing matchers). All methods of this
+// interface work exactly the same as their counterparts from testing.TB type.
 type TB interface {
-	// Log logs a single message produced from args.
-	Log(args ...any)
-	// Fail marks the test as failed but continues execution.
+	Cleanup(func())
+	Error(args ...any)
+	Errorf(format string, args ...any)
 	Fail()
-	// FailNow marks the test as failed and stops execution.
 	FailNow()
-	// Helper marks the invoking function as a helper function.
+	Failed() bool
+	Fatal(args ...any)
+	Fatalf(format string, args ...any)
 	Helper()
+	Log(args ...any)
+	Logf(format string, args ...any)
+	Name() string
+	Setenv(key, value string)
+	Skip(args ...any)
+	SkipNow()
+	Skipf(format string, args ...any)
+	Skipped() bool
+	TempDir() string
 }
 
 type failFunc func()
