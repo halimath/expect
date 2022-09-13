@@ -71,6 +71,9 @@ Matcher | Type constraints | Description
 `MapContaining` | `map` | Expects the given value to be a map containing a given key, value pair
 `SliceContaining` | `slice` | Expects the given value to be a slice containing a given set of values in any order
 `SliceContainingInOrder` | `slice` | Expects the given value to be a slice containing a given list of values in given order
+`StringContaining` | `string` | Expects the given value to be a string containing a given substring
+`StringHavingPrefix` | `string` | Expects the given value to be a string having a given prefix
+`StringHavingSuffix` | `string` | Expects the given value to be a string having a given suffix
 
 ## Defining you own matcher
 
