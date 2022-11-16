@@ -16,7 +16,7 @@ func TestEqual_string(t *testing.T) {
 func TestEqual_failNow(t *testing.T) {
 	got := "something"
 
-	ExpectThat(t, got, WithStopImmediately()).
+	EnsureThat(t, got).
 		Is(Equal("something"))
 }
 

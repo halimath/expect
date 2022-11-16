@@ -38,16 +38,15 @@ ExpectThat(t, got).
 	}))
 ```
 
-To start a new chain of expectations, use the `That` function providing a `testing.T` or `testing.B` and the
+To start a new chain of expectations, use the `ExpectThat` function providing a `testing.T` or `testing.B` and the
 value to run expections on. Then, use one of the chaining methods `Is`, `Has`, `And` or `Matches` to add a 
 matcher to the chain. `expect-go` provides a set of predefined matchers (see below) but you can also define
 your own matchers.
 
-If you want to stop the test's execution on the first failing expectation, provide the `WithStopImmediate()`
-clause to `ExpectThat`:
+If you want to stop the test's execution on the first failing expectation, use `EnsureThat`:
 
 ```go
-ExpectThat(t, got, WithStopImmediately()).
+EnsureThat(t, got).
 	Is(DeepEqual(MyStruc{
     	Foo: "bar",
     	Spam: "eggs",

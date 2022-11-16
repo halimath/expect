@@ -86,18 +86,6 @@ func (ctx *context) T() TB {
 	return ctx.t
 }
 
-type Clause interface {
-	clause()
-}
-
-type stopImmediately struct{}
-
-func (stopImmediately) clause() {}
-
-func WithStopImmediately() Clause {
-	return stopImmediately{}
-}
-
 // Chain defines an intermediate type used to chain expectations on a single type. Normally, test code will
 // not use this type but instead call the chaining methods to invoce Matchers.
 type Chain struct {
@@ -106,23 +94,32 @@ type Chain struct {
 }
 
 // ExpectThat starts a new expectation chain using got as the value to expect things from. It uses t to interact
-// with the running test.
-func ExpectThat(t TB, got any, clauses ...Clause) *Chain {
+// with the running test. Any failing matches originating from a call to ExpectThat cause the test to fail at
+// the end of the execution; it works like caling t.Error(...).
+func ExpectThat(t TB, got any) *Chain {
 	t.Helper()
-	ctx := &context{
-		t:    t,
-		fail: t.Fail,
-	}
-
-	for _, clause := range clauses {
-		if _, ok := clause.(stopImmediately); ok {
-			ctx.fail = t.FailNow
-		}
-	}
 
 	return &Chain{
 		got: got,
-		ctx: ctx,
+		ctx: &context{
+			t:    t,
+			fail: t.Fail,
+		},
+	}
+}
+
+// EnsureThat starts a new expectation chain using got as the value to ensure things from. It uses t to interact
+// with the running test. Any failing matches originating from a call to EnsureThat cause the test to fail
+// immediately; it works like caling t.FailNow(...).
+func EnsureThat(t TB, got any) *Chain {
+	t.Helper()
+
+	return &Chain{
+		got: got,
+		ctx: &context{
+			t:    t,
+			fail: t.FailNow,
+		},
 	}
 }
 
