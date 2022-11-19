@@ -1,9 +1,5 @@
 package expect
 
-import (
-	mapset "github.com/deckarep/golang-set/v2"
-)
-
 // SliceContaining expects got to be a slice of element type T contain all values given as wants in any order.
 // Duplicates in wants are not considered to be contained multiple times in the given slice.
 func SliceContaining[T comparable](wants ...T) Matcher {
@@ -20,11 +16,11 @@ func SliceContaining[T comparable](wants ...T) Matcher {
 			return
 		}
 
-		wantsMissing := mapset.NewSet(wants...)
+		wantsMissing := NewSet(wants...)
 
 		for _, g := range s {
 			wantsMissing.Remove(g)
-			if wantsMissing.Cardinality() == 0 {
+			if len(wantsMissing) == 0 {
 				return
 			}
 		}

@@ -13,7 +13,7 @@ func TestEqual_string(t *testing.T) {
 		Is(Equal("something"))
 }
 
-func TestEqual_failNow(t *testing.T) {
+func TestEqual_ensure(t *testing.T) {
 	got := "something"
 
 	EnsureThat(t, got).

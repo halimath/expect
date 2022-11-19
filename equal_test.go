@@ -17,16 +17,3 @@ func TestEqual(t *testing.T) {
 		t.Errorf("not expected: %#v", tm)
 	}
 }
-
-func TestDeepEqual(t *testing.T) {
-	var tm contextMock
-
-	DeepEqual("foo").Match(&tm, "foo")
-	DeepEqual("foo").Match(&tm, "bar")
-
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{"\nvalues are not deeply equal\n\nwant: foo\ngot:  bar\n      ▲▲▲\n"},
-	}) {
-		t.Errorf("not expected: %#v", tm)
-	}
-}

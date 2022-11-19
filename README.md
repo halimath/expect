@@ -51,7 +51,6 @@ EnsureThat(t, got).
     	Foo: "bar",
     	Spam: "eggs",
 	}))
-
 ```
 
 ## Predefined matchers
@@ -73,6 +72,29 @@ Matcher | Type constraints | Description
 `StringContaining` | `string` | Expects the given value to be a string containing a given substring
 `StringHavingPrefix` | `string` | Expects the given value to be a string having a given prefix
 `StringHavingSuffix` | `string` | Expects the given value to be a string having a given suffix
+
+### Deep equality
+
+The `DeepEqual` matcher is special as compared to the other ones. It uses a recursive algorithm to compare the
+given values deeply traversing nested structures. It handles all primitive types, interfaces, maps, slices,
+arrays and structs. It reports all differences found so test failures are easy to track down.
+
+The equality checking algorithm can be customized on a per-matcher-invocation level using any of the following
+options:
+
+Option | Default Value | Description
+-- | -- | --
+`FloatPrecision` | 10 | Number of significant floating point digits used when comparing `float32` or `float64`
+`NilSlicesAreEmpty` | true | Whether a `nil` slice is considered equal to an empty but non-`nil` slice
+`NilMapsAreEmpty` | true | Whether a `nil` map is considered equal to an empty but non-`nil` map
+`ExcludeUnexportedStructFields` | false | Whether unexported (lower case) struct fields should be ignored when comparing struct values.
+
+The options must be given to the `DeepEqual` matcher:
+
+```go
+ExpectThat(t, map[string]int{}).
+	Is(DeepEqual(map[string]int(nil), NilMapsAreEmpty(false)))
+```
 
 ## Defining you own matcher
 
