@@ -75,6 +75,10 @@ func TestDeepEquals_standardCases(t *testing.T) {
 			{"[0]", "0", "2"},
 			{"[1]", "1", "3"},
 		}},
+		{[]int{}, []int{1, 2}, diff{
+			{"[0]", "<unwanted slice index>", "1"},
+			{"[1]", "<unwanted slice index>", "2"},
+		}},
 
 		// arrays
 		{[2]int{0, 1}, [2]int{0, 1}, nil},
@@ -145,6 +149,19 @@ func TestDeepEquals_excludeUnexportedFields(t *testing.T) {
 	}
 
 	got := deepEquals(s{"a"}, s{"b"}, ExcludeUnexportedStructFields(true))
+
+	if got != nil {
+		t.Errorf("expected no diff but got %#v", got)
+	}
+}
+
+func TestDeepEquals_excludeFieldsOfType(t *testing.T) {
+	type s struct {
+		f string
+		t int
+	}
+
+	got := deepEquals(s{"a", 0}, s{"a", 1}, ExcludeTypes{reflect.TypeOf(int(0))})
 
 	if got != nil {
 		t.Errorf("expected no diff but got %#v", got)

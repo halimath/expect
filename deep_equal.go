@@ -39,6 +39,14 @@ type ExcludeUnexportedStructFields bool
 
 func (ExcludeUnexportedStructFields) deepEqualOpt() {}
 
+// ExcludeTypes is a DeepEqualOpt that lists types to be ignored
+// from the comparison. Each struct field with a type listed in
+// ExcludeTypes will not be taken into account when calculating
+// differences.
+type ExcludeTypes []reflect.Type
+
+func (ExcludeTypes) deepEqualOpt() {}
+
 // DeepEqual asserts that given and wanted value are deeply equal by using reflection to inspect and dive into
 // nested structures.
 func DeepEqual[T any](want T, opts ...DeepEqualOpt) Matcher {
@@ -60,6 +68,7 @@ func deepEquals(want, got any, opts ...DeepEqualOpt) diff {
 		floatFormat:       fmt.Sprintf("%%.%df", 10),
 		nilSlicesAreEmpty: true,
 		nilMapsAreEmpty:   true,
+		excludedTypes:     make(map[reflect.Type]struct{}),
 	}
 
 	for _, opt := range opts {
@@ -72,6 +81,10 @@ func deepEquals(want, got any, opts ...DeepEqualOpt) diff {
 			ctx.nilMapsAreEmpty = bool(o)
 		case ExcludeUnexportedStructFields:
 			ctx.excludeUnexportedStructFields = bool(o)
+		case ExcludeTypes:
+			for _, t := range o {
+				ctx.excludedTypes[t] = struct{}{}
+			}
 		}
 	}
 
@@ -103,6 +116,11 @@ func determineDiff(ctx *diffContext, want, got reflect.Value) {
 	}
 	if want.IsValid() && !got.IsValid() {
 		ctx.addDiff(want, "<nil>")
+		return
+	}
+
+	// Check if the types are excluded
+	if _, ok := ctx.excludedTypes[want.Type()]; ok {
 		return
 	}
 
@@ -254,7 +272,8 @@ func determineDiff(ctx *diffContext, want, got reflect.Value) {
 			return
 		}
 
-		// Iterate over elements and compare them
+		// Iterate over elements and compare them, starting with the wanted
+		// slice
 		for i := 0; i < wantLen; i++ {
 			ctx.pushPathf("[%d]", i)
 			wantVal := want.Index(i)
@@ -266,6 +285,14 @@ func determineDiff(ctx *diffContext, want, got reflect.Value) {
 				determineDiff(ctx, wantVal, gotVal)
 			}
 			ctx.popPath()
+		}
+
+		// Continue to iterate over any remaining element in got
+		for i := wantLen; i < gotLen; i++ {
+			ctx.pushPathf("[%d]", i)
+			ctx.addDiff("<unwanted slice index>", got.Index(i))
+			ctx.popPath()
+
 		}
 
 	case reflect.Array:
@@ -336,6 +363,7 @@ type diffContext struct {
 	nilSlicesAreEmpty             bool
 	nilMapsAreEmpty               bool
 	excludeUnexportedStructFields bool
+	excludedTypes                 map[reflect.Type]struct{}
 
 	wantsSeen   set[reflect.Value]
 	diff        diff
