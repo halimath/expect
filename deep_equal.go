@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -47,6 +48,16 @@ type ExcludeTypes []reflect.Type
 
 func (ExcludeTypes) deepEqualOpt() {}
 
+// ExcludeFields is a DeepEqualOpt that lists field patterns that should be
+// excluded from the comparison.
+//
+// The field pattern format uses a dot notation and follows the format used
+// in comparison output. The wildcard '*' can be used to match any value
+// (i.e. for slice indexes).
+type ExcludeFields []string
+
+func (ExcludeFields) deepEqualOpt() {}
+
 // DeepEqual asserts that given and wanted value are deeply equal by using reflection to inspect and dive into
 // nested structures.
 func DeepEqual[T any](want T, opts ...DeepEqualOpt) Matcher {
@@ -85,6 +96,19 @@ func deepEquals(want, got any, opts ...DeepEqualOpt) diff {
 			for _, t := range o {
 				ctx.excludedTypes[t] = struct{}{}
 			}
+		case ExcludeFields:
+			for _, p := range o {
+				pat := strings.ReplaceAll(p, ".", "\\.")
+				pat = strings.ReplaceAll(pat, "[", "\\[")
+				pat = strings.ReplaceAll(pat, "]", "\\]")
+				pat = strings.ReplaceAll(pat, "*", "[^.\\]]*")
+
+				r, err := regexp.Compile(pat)
+				if err != nil {
+					panic(fmt.Sprintf("invalid excluded fields pattern passed to DeepEqual: %q", p))
+				}
+				ctx.excludedFields = append(ctx.excludedFields, r)
+			}
 		}
 	}
 
@@ -103,6 +127,11 @@ func determineDiff(ctx *diffContext, want, got reflect.Value) {
 	}
 	// Otherwise mark want as visited.
 	ctx.visit(want)
+
+	// Test if the path has been marked for exclusion
+	if ctx.currentPathExcluded() {
+		return
+	}
 
 	// If neither want nor got are value (i.e. both are nil) there is no difference.
 	if !want.IsValid() && !got.IsValid() {
@@ -364,10 +393,23 @@ type diffContext struct {
 	nilMapsAreEmpty               bool
 	excludeUnexportedStructFields bool
 	excludedTypes                 map[reflect.Type]struct{}
+	excludedFields                []*regexp.Regexp
 
 	wantsSeen   set[reflect.Value]
 	diff        diff
 	nestingPath []string
+}
+
+func (c *diffContext) currentPathExcluded() bool {
+	p := c.path()
+
+	for _, pat := range c.excludedFields {
+		if pat.MatchString(p) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *diffContext) visit(want reflect.Value) {

@@ -155,13 +155,56 @@ func TestDeepEquals_excludeUnexportedFields(t *testing.T) {
 	}
 }
 
-func TestDeepEquals_excludeFieldsOfType(t *testing.T) {
+func TestDeepEquals_excludeTypes(t *testing.T) {
 	type s struct {
 		f string
 		t int
 	}
 
 	got := deepEquals(s{"a", 0}, s{"a", 1}, ExcludeTypes{reflect.TypeOf(int(0))})
+
+	if got != nil {
+		t.Errorf("expected no diff but got %#v", got)
+	}
+}
+
+func TestDeepEquals_excludeFields(t *testing.T) {
+	type nested struct {
+		nestedField string
+	}
+
+	type root struct {
+		stringField string
+		sliceField  []nested
+		mapField    map[string]string
+	}
+
+	first := root{
+		stringField: "a",
+		sliceField: []nested{
+			{nestedField: "b"},
+		},
+		mapField: map[string]string{
+			"foo":  "bar",
+			"spam": "eggs",
+		},
+	}
+
+	second := root{
+		stringField: "a",
+		sliceField: []nested{
+			{nestedField: "c"},
+		},
+		mapField: map[string]string{
+			"foo":  "bar",
+			"spam": "spam and eggs",
+		},
+	}
+
+	got := deepEquals(first, second, ExcludeFields{
+		".sliceField[*].nestedField",
+		".mapField[spam]",
+	})
 
 	if got != nil {
 		t.Errorf("expected no diff but got %#v", got)

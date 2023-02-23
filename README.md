@@ -80,20 +80,77 @@ given values deeply traversing nested structures. It handles all primitive types
 arrays and structs. It reports all differences found so test failures are easy to track down.
 
 The equality checking algorithm can be customized on a per-matcher-invocation level using any of the following
-options:
-
-Option | Default Value | Description
--- | -- | --
-`FloatPrecision` | 10 | Number of significant floating point digits used when comparing `float32` or `float64`
-`NilSlicesAreEmpty` | true | Whether a `nil` slice is considered equal to an empty but non-`nil` slice
-`NilMapsAreEmpty` | true | Whether a `nil` map is considered equal to an empty but non-`nil` map
-`ExcludeUnexportedStructFields` | false | Whether unexported (lower case) struct fields should be ignored when comparing struct values.
-
-The options must be given to the `DeepEqual` matcher:
+options. All options must be given to the `DeepEqual` matcher:
 
 ```go
 ExpectThat(t, map[string]int{}).
 	Is(DeepEqual(map[string]int(nil), NilMapsAreEmpty(false)))
+```
+
+
+#### Floatint point precision
+
+Passing the `FloatPrecision` option allows you to customize the floating point precision when comparing both
+`float32` and `float64`. The default value is 10 decimal digits.
+
+#### Nil slices and maps
+
+By default `nil` slices are considered equal to empty ones as well as `nil` maps are considered equal to empty
+ones. You can customize this by passing `NilSlicesAreEmpty(false)` or `NilMapsAreEmpty(false)`.
+
+#### Struct fields
+
+Struct fields can be excluded from the comparison using any of the following methods.
+
+Passing `ExcludeUnexportedStructFields(true)` excludes unexported struct fields (those with a name starting
+with a lower case letter) from the comparison. The default is not to exclude them.
+
+Using `ExludeTypes` you can exclude all fields with a type given in the list. `ExcludeTypes` is a slice of
+`reflect.Type` so you can pass in any number of types.
+
+`ExcludeFields` allows you to specify path expressions (given as strings) that match a path to a field. The
+syntax resembles the format used to report differences (so you can simply copy them from the initial test
+failure). In addition, you can use a wildcard `*` to match any field or index value.
+
+The following code sample demonstrates the usage:
+
+```go
+type nested struct {
+	nestedField string
+}
+
+type root struct {
+	stringField string
+	sliceField  []nested
+	mapField    map[string]string
+}
+
+first := root{
+	stringField: "a",
+	sliceField: []nested{
+		{nestedField: "b"},
+	},
+	mapField: map[string]string{
+		"foo":  "bar",
+		"spam": "eggs",
+	},
+}
+
+second := root{
+	stringField: "a",
+	sliceField: []nested{
+		{nestedField: "c"},
+	},
+	mapField: map[string]string{
+		"foo":  "bar",
+		"spam": "spam and eggs",
+	},
+}
+
+got := deepEquals(first, second, ExcludeFields{
+	".sliceField[*].nestedField",
+	".mapField[spam]",
+})
 ```
 
 ## Defining you own matcher
