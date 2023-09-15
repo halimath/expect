@@ -6,21 +6,21 @@ import (
 )
 
 func TestLen(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
-	Len(2).Match(&tm, 32)
+	HasLenOf[int](2).Match(&tm, 32)
 
-	Len(2).Match(&tm, "fo")
-	Len(2).Match(&tm, "foo")
+	HasLenOf[string](2).Match(&tm, "fo")
+	HasLenOf[string](2).Match(&tm, "foo")
 
-	Len(2).Match(&tm, []rune{'f', 'o'})
-	Len(2).Match(&tm, []rune{'f', 'o', 'o'})
+	HasLenOf[[]rune](2).Match(&tm, []rune{'f', 'o'})
+	HasLenOf[[]rune](2).Match(&tm, []rune{'f', 'o', 'o'})
 
-	Len(2).Match(&tm, map[string]int{"f": 1, "o": 2})
-	Len(2).Match(&tm, map[string]int{"f": 1, "o": 2, "b": 3})
+	HasLenOf[map[string]int](2).Match(&tm, map[string]int{"f": 1, "o": 2})
+	HasLenOf[map[string]int](2).Match(&tm, map[string]int{"f": 1, "o": 2, "b": 3})
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{
 			"unable to determine len of <32>",
 			"exected <foo> to have len 2 but got 3",
 			"exected <[102 111 111]> to have len 2 but got 3",

@@ -8,13 +8,13 @@ import (
 )
 
 func TestDeepEqual(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
-	DeepEqual("foo").Match(&tm, "foo")
-	DeepEqual("foo").Match(&tm, "bar")
+	IsDeepEqualTo("foo").Match(&tm, "foo")
+	IsDeepEqualTo("foo").Match(&tm, "bar")
 
-	want := contextMock{
-		failures: []string{"values are not deeply equal:\n  want: foo\n   got: bar"},
+	want := tbMock{
+		errors: []string{"values are not deeply equal:\n  want: foo\n   got: bar"},
 	}
 
 	if !reflect.DeepEqual(tm, want) {

@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/halimath/expect-go/internal/set"
 )
 
 // DeepEqualOpt defines an interface for types that can be used as options
@@ -58,18 +60,14 @@ type ExcludeFields []string
 
 func (ExcludeFields) deepEqualOpt() {}
 
-// DeepEqual asserts that given and wanted value are deeply equal by using reflection to inspect and dive into
-// nested structures.
-func DeepEqual[T any](want T, opts ...DeepEqualOpt) Matcher {
-	return MatcherFunc(func(ctx Context, got any) {
-		ctx.T().Helper()
-
-		// if diff := deep.Equal(want, got); diff != nil {
-		// 	ctx.Failf("values are not deeply equal\nwant: %v\ngot: %v\ndiff: %s", want, got, diff)
-		// }
+// IsDeepEqualTo asserts that given and wanted value are deeply equal by using reflection to inspect and dive
+// into nested structures.
+func IsDeepEqualTo[T any](want T, opts ...DeepEqualOpt) Matcher[T] {
+	return MatcherFunc[T](func(t TB, got T) {
+		t.Helper()
 
 		if diff := deepEquals(want, got, opts...); diff != nil {
-			ctx.Failf("values are not deeply equal:%s", diff)
+			t.Errorf("values are not deeply equal:%s", diff)
 		}
 	})
 }
@@ -395,7 +393,7 @@ type diffContext struct {
 	excludedTypes                 map[reflect.Type]struct{}
 	excludedFields                []*regexp.Regexp
 
-	wantsSeen   set[reflect.Value]
+	wantsSeen   set.Set[reflect.Value]
 	diff        diff
 	nestingPath []string
 }
@@ -414,7 +412,7 @@ func (c *diffContext) currentPathExcluded() bool {
 
 func (c *diffContext) visit(want reflect.Value) {
 	if c.wantsSeen == nil {
-		c.wantsSeen = make(set[reflect.Value])
+		c.wantsSeen = make(set.Set[reflect.Value])
 	}
 	c.wantsSeen.Add(want)
 }

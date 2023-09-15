@@ -6,28 +6,28 @@ import (
 )
 
 func TestNil(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
 	s := "foo"
-	Nil().Match(&tm, &s)
-	Nil().Match(&tm, nil)
+	IsNil().Match(&tm, &s)
+	IsNil().Match(&tm, nil)
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{"expected <foo> to be nil"},
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{"expected <foo> to be nil"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}
 }
 
 func TestNotNil(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
 	s := "foo"
-	NotNil().Match(&tm, &s)
-	NotNil().Match(&tm, nil)
+	IsNotNil().Match(&tm, &s)
+	IsNotNil().Match(&tm, nil)
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{"expected value to be not nil"},
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{"expected value to be not nil"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}

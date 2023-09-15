@@ -6,16 +6,14 @@ import (
 )
 
 func TestStringContaining(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
-	StringContaining("oba").Match(&tm, "foobar")
-	StringContaining("oba").Match(&tm, "spameggs")
-	StringContaining("oba").Match(&tm, 17)
+	IsStringContaining("oba").Match(&tm, "foobar")
+	IsStringContaining("oba").Match(&tm, "spameggs")
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{
 			"expected 'spameggs' to contain 'oba'",
-			"expected value of type string but got int",
 		},
 	}) {
 		t.Errorf("not expected: %#v", tm)
@@ -23,16 +21,14 @@ func TestStringContaining(t *testing.T) {
 }
 
 func TestStringWithPrefix(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
-	StringWithPrefix("foo").Match(&tm, "foobar")
-	StringWithPrefix("foo").Match(&tm, "spameggs")
-	StringWithPrefix("foo").Match(&tm, 17)
+	IsStringWithPrefix("foo").Match(&tm, "foobar")
+	IsStringWithPrefix("foo").Match(&tm, "spameggs")
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{
 			"expected 'spameggs' to have prefix 'foo'",
-			"expected value of type string but got int",
 		},
 	}) {
 		t.Errorf("not expected: %#v", tm)
@@ -40,16 +36,14 @@ func TestStringWithPrefix(t *testing.T) {
 }
 
 func TestStringWithSuffix(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
-	StringWithSuffix("bar").Match(&tm, "foobar")
-	StringWithSuffix("bar").Match(&tm, "spameggs")
-	StringWithSuffix("bar").Match(&tm, 17)
+	IsStringWithSuffix("bar").Match(&tm, "foobar")
+	IsStringWithSuffix("bar").Match(&tm, "spameggs")
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{
 			"expected 'spameggs' to have suffix 'bar'",
-			"expected value of type string but got int",
 		},
 	}) {
 		t.Errorf("not expected: %#v", tm)

@@ -6,30 +6,30 @@ import (
 )
 
 func TestSliceContaining(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
 	s := []int{1, 2, 3, 4}
-	SliceContaining(1, 3).Match(&tm, s)
-	SliceContaining(3, 1).Match(&tm, s)
-	SliceContaining(1, 5).Match(&tm, s)
+	IsSliceContaining(1, 3).Match(&tm, s)
+	IsSliceContaining(3, 1).Match(&tm, s)
+	IsSliceContaining(1, 5).Match(&tm, s)
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{"[]int does not contain [5]"},
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{"[]int does not contain [5]"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}
 }
 
 func TestSliceContainingInOrder(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
 	s := []int{1, 2, 3, 4}
-	SliceContainingInOrder(1, 3).Match(&tm, s)
-	SliceContainingInOrder(3, 1).Match(&tm, s)
-	SliceContainingInOrder(1, 5).Match(&tm, s)
+	IsSliceContainingInOrder(1, 3).Match(&tm, s)
+	IsSliceContainingInOrder(3, 1).Match(&tm, s)
+	IsSliceContainingInOrder(1, 5).Match(&tm, s)
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{
 			"[]int does not contain 1 in order",
 			"[]int does not contain 5 in order",
 		},
