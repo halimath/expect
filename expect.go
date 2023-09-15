@@ -3,37 +3,33 @@
 // custom assertions/expectations by implementing the Matcher interface.
 package expect
 
-import (
-	"fmt"
-)
+// // Context defines the context used by Matcher to interact with the running test (i.e. failing it.). Using the
+// // Context interface Matchers can reject values with a custom message which will fail the test either
+// // immediately or deferred, depending on the surrounding call.
+// type Context interface {
+// 	// Fail fails the test producing a message using the provided args.
+// 	Fail(args ...any)
 
-// Context defines the context used by Matcher to interact with the running test (i.e. failing it.). Using the
-// Context interface Matchers can reject values with a custom message which will fail the test either
-// immediately or deferred, depending on the surrounding call.
-type Context interface {
-	// Fail fails the test producing a message using the provided args.
-	Fail(args ...any)
+// 	// Failf fails the test producing a message by formatting args according to format.
+// 	Failf(format string, args ...any)
 
-	// Failf fails the test producing a message by formatting args according to format.
-	Failf(format string, args ...any)
-
-	// T provides access to the underlyings testing.TB.
-	T() TB
-}
+// 	// T provides access to the underlyings testing.TB.
+// 	T() TB
+// }
 
 // Matcher defines the interface implemented to execute a single expectation.
-type Matcher interface {
+type Matcher[G any] interface {
 	// Match is called with a Context interface and the given value got. Implementations should perform
 	// matching logic and call one of the fail methods from Context to mark the test as failed.
-	Match(ctx Context, got any)
+	Match(t TB, got G)
 }
 
 // MatcherFunc is a convenience type that allows matchers to be implemented using a single function.
-type MatcherFunc func(ctx Context, got any)
+type MatcherFunc[G any] func(TB, G)
 
-func (f MatcherFunc) Match(ctx Context, got any) {
-	ctx.T().Helper()
-	f(ctx, got)
+func (f MatcherFunc[G]) Match(t TB, got G) {
+	t.Helper()
+	f(t, got)
 }
 
 // TB is basically a copy from testing.TB. It is used here to allow other implementations (testing.TB
@@ -62,84 +58,82 @@ type TB interface {
 
 type failFunc func()
 
-// context implements Context. It calls fail to markt the test as failed.
-type context struct {
-	t    TB
-	fail failFunc
-}
+// // context implements Context. It calls fail to markt the test as failed.
+// type context struct {
+// 	t    TB
+// 	fail failFunc
+// }
 
-var _ Context = &context{}
+// var _ Context = &context{}
 
-func (ctx *context) Fail(args ...any) {
-	ctx.t.Helper()
-	msg := fmt.Sprint(args...)
-	ctx.t.Log(msg)
-	ctx.fail()
-}
+// func (ctx *context) Fail(args ...any) {
+// 	ctx.t.Helper()
+// 	msg := fmt.Sprint(args...)
+// 	ctx.t.Log(msg)
+// 	ctx.fail()
+// }
 
-func (ctx *context) Failf(format string, args ...any) {
-	ctx.t.Helper()
-	ctx.Fail(fmt.Sprintf(format, args...))
-}
+// func (ctx *context) Failf(format string, args ...any) {
+// 	ctx.t.Helper()
+// 	ctx.Fail(fmt.Sprintf(format, args...))
+// }
 
-func (ctx *context) T() TB {
-	return ctx.t
-}
+// func (ctx *context) T() TB {
+// 	return ctx.t
+// }
 
-// Chain defines an intermediate type used to chain expectations on a single type. Normally, test code will
-// not use this type but instead call the chaining methods to invoce Matchers.
-type Chain struct {
-	got any
-	ctx Context
-}
+// // Chain defines an intermediate type used to chain expectations on a single type. Normally, test code will
+// // not use this type but instead call the chaining methods to invoce Matchers.
+// type Chain[T any] struct {
+// 	got T
+// 	ctx Context
+// }
 
 // ExpectThat starts a new expectation chain using got as the value to expect things from. It uses t to interact
 // with the running test. Any failing matches originating from a call to ExpectThat cause the test to fail at
 // the end of the execution; it works like caling t.Error(...).
-func ExpectThat(t TB, got any) *Chain {
+func ExpectThat[G any](t TB, got G, matchers ...Matcher[G]) {
 	t.Helper()
 
-	return &Chain{
-		got: got,
-		ctx: &context{
-			t:    t,
-			fail: t.Fail,
-		},
-	}
-}
-
-// EnsureThat starts a new expectation chain using got as the value to ensure things from. It uses t to interact
-// with the running test. Any failing matches originating from a call to EnsureThat cause the test to fail
-// immediately; it works like caling t.FailNow(...).
-func EnsureThat(t TB, got any) *Chain {
-	t.Helper()
-
-	return &Chain{
-		got: got,
-		ctx: &context{
-			t:    t,
-			fail: t.FailNow,
-		},
+	for _, m := range matchers {
+		m.Match(t, got)
 	}
 }
 
 // That is an alias for ExpectThat intended to be used when the package is not dot imported.
-var That = ExpectThat
+func That[T any](t TB, got T) { ExpectThat(t, got) }
 
-// Is adds m to e providing a fluent API.
-func (e *Chain) Is(m Matcher) *Chain { e.ctx.T().Helper(); return e.runMatcher(m) }
+// EnsureThat starts a new expectation chain using got as the value to ensure things from. It uses t to interact
+// with the running test. Any failing matches originating from a call to EnsureThat cause the test to fail
+// immediately; it works like caling t.FailNow(...).
+func EnsureThat[G any](t TB, got G, matchers ...Matcher[G]) {
+	t.Helper()
 
-// Has adds m to e providing a fluent API.
-func (e *Chain) Has(m Matcher) *Chain { e.ctx.T().Helper(); return e.runMatcher(m) }
-
-// And adds m to e providing a fluent API.
-func (e *Chain) And(m Matcher) *Chain { e.ctx.T().Helper(); return e.runMatcher(m) }
-
-// Matches adds m to e providing a fluent API.
-func (e *Chain) Matches(m Matcher) *Chain { e.ctx.T().Helper(); return e.runMatcher(m) }
-
-func (e *Chain) runMatcher(m Matcher) *Chain {
-	e.ctx.T().Helper()
-	m.Match(e.ctx, e.got)
-	return e
+	ExpectThat(&ensureTB{t}, got, matchers...)
 }
+
+type ensureTB struct {
+	TB
+}
+
+func (t *ensureTB) Error(args ...any)                 { t.Helper(); t.Fatal(args...) }
+func (t *ensureTB) Errorf(format string, args ...any) { t.Helper(); t.Fatalf(format, args...) }
+func (t *ensureTB) Fail()                             { t.Helper(); t.FailNow() }
+
+// // Is adds m to e providing a fluent API.
+// func (e *Chain[T]) Is(m Matcher[T]) *Chain[T] { e.ctx.T().Helper(); return e.runMatcher(m) }
+
+// // Has adds m to e providing a fluent API.
+// func (e *Chain[T]) Has(m Matcher[T]) *Chain[T] { e.ctx.T().Helper(); return e.runMatcher(m) }
+
+// // And adds m to e providing a fluent API.
+// func (e *Chain[T]) And(m Matcher[T]) *Chain[T] { e.ctx.T().Helper(); return e.runMatcher(m) }
+
+// // Matches adds m to e providing a fluent API.
+// func (e *Chain[T]) Matches(m Matcher[T]) *Chain[T] { e.ctx.T().Helper(); return e.runMatcher(m) }
+
+// func (e *Chain[T]) runMatcher(m Matcher[T]) *Chain[T] {
+// 	e.ctx.T().Helper()
+// 	m.Match(e.ctx, e.got)
+// 	return e
+// }

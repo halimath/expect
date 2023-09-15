@@ -1,23 +1,17 @@
 package expect
 
-func MapContaining[K, V comparable](key K, val V) Matcher {
-	return MatcherFunc(func(ctx Context, got any) {
-		ctx.T().Helper()
+func IsMapContaining[K, V comparable](key K, val V) Matcher[map[K]V] {
+	return MatcherFunc[map[K]V](func(t TB, got map[K]V) {
+		t.Helper()
 
-		m, ok := got.(map[K]V)
+		vg, ok := got[key]
 		if !ok {
-			ctx.Failf("expected %T but got %T", m, got)
-			return
-		}
-
-		vg, ok := m[key]
-		if !ok {
-			ctx.Failf("expected <%v> to contain key <%v> but that key does not exist", m, key)
+			t.Errorf("expected <%v> to contain key <%v> but that key does not exist", got, key)
 			return
 		}
 
 		if vg != val {
-			ctx.Failf("expected <%v> to contain key <%v> with value <%v> but got <%v>", m, key, val, vg)
+			t.Errorf("expected <%v> to contain key <%v> with value <%v> but got <%v>", got, key, val, vg)
 		}
 	})
 }

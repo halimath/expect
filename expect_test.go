@@ -6,12 +6,12 @@ import (
 
 func TestThat_noFailure(t *testing.T) {
 	var m1Called, m2Called int
-	m1 := MatcherFunc(func(Context, interface{}) {
+	var m1 Matcher[string] = MatcherFunc[string](func(TB, string) {
 		m1Called++
 	})
-	m2 := MatcherFunc(func(Context, interface{}) {
+	var m2 Matcher[string] = MatcherFunc[string](func(TB, string) {
 		m2Called++
 	})
 
-	ExpectThat(t, "foo").Is(m1).Has(m2)
+	ExpectThat(t, "foo", m1, m2)
 }

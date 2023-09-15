@@ -6,13 +6,13 @@ import (
 )
 
 func TestEqual(t *testing.T) {
-	var tm contextMock
+	var tm tbMock
 
-	Equal("foo").Match(&tm, "foo")
-	Equal("foo").Match(&tm, "bar")
+	IsEqualTo("foo").Match(&tm, "foo")
+	IsEqualTo("foo").Match(&tm, "bar")
 
-	if !reflect.DeepEqual(tm, contextMock{
-		failures: []string{"values are not equal\nwant: foo\ngot:  bar"},
+	if !reflect.DeepEqual(tm, tbMock{
+		errors: []string{"values are not equal\nwant: foo\ngot:  bar"},
 	}) {
 		t.Errorf("not expected: %#v", tm)
 	}

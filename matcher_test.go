@@ -5,9 +5,9 @@ import (
 )
 
 func TestFunc(t *testing.T) {
-	m := MatcherFunc(func(ctx Context, got any) {
+	m := MatcherFunc[string](func(TB, string) {
 	})
 
-	ctx := &contextMock{}
+	ctx := &tbMock{}
 	m.Match(ctx, "got")
 }

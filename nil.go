@@ -2,10 +2,10 @@ package expect
 
 import "reflect"
 
-// Nil matches a value to be nil.
-func Nil() Matcher {
-	return MatcherFunc(func(ctx Context, got any) {
-		ctx.T().Helper()
+// IsNil matches a value to be nil.
+func IsNil() Matcher[any] {
+	return MatcherFunc[any](func(t TB, got any) {
+		t.Helper()
 
 		if got != nil {
 			v := reflect.ValueOf(got)
@@ -13,18 +13,18 @@ func Nil() Matcher {
 				v = v.Elem()
 			}
 
-			ctx.Failf("expected <%v> to be nil", v)
+			t.Errorf("expected <%v> to be nil", v)
 		}
 	})
 }
 
-// NotNil expects got to be non nil.
-func NotNil() Matcher {
-	return MatcherFunc(func(ctx Context, got any) {
-		ctx.T().Helper()
+// IsNotNil expects got to be non nil.
+func IsNotNil() Matcher[any] {
+	return MatcherFunc[any](func(t TB, got any) {
+		t.Helper()
 
 		if got == nil {
-			ctx.Failf("expected value to be not nil")
+			t.Errorf("expected value to be not nil")
 		}
 	})
 }

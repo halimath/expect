@@ -31,62 +31,72 @@ All following example assume the dot import.
 The following example demonstates the basic use:
 
 ```go
-ExpectThat(t, got).
-	Is(DeepEqual(MyStruc{
+ExpectThat(t, got,
+	IsDeepEqualTo(MyStruc{
     	Foo: "bar",
     	Spam: "eggs",
 	}))
 ```
 
-To start a new chain of expectations, use the `ExpectThat` function providing a `testing.T` or `testing.B` and the
-value to run expections on. Then, use one of the chaining methods `Is`, `Has`, `And` or `Matches` to add a 
-matcher to the chain. `expect-go` provides a set of predefined matchers (see below) but you can also define
-your own matchers.
-
-If you want to stop the test's execution on the first failing expectation, use `EnsureThat`:
+Expectations are written using `ExpectThat` passing in either a `testing.T` or a `testing.B` followed by the
+actual value and zero or more matchers (passing in zero results in a no-op). Here is a somewhat more complex
+expectation:
 
 ```go
-EnsureThat(t, got).
-	Is(DeepEqual(MyStruc{
+actual := []int{2, 3, 5, 7, 11, 13, 17, 19}
+
+ExpectThat(t, actual,
+	HasLenOf[[]int](8),
+	IsSliceContainingInOrder(5, 7, 13),
+)
+```
+
+`ExpectThat` will execute all matchers in order and report all errors. Any matcher that produces a negative
+result causes the test to fail at the end. 
+
+If you want to fail a test immediately, use `EnsureThat` which has the same signature:
+
+```go
+EnsureThat(t, got,
+	IsDeepEqualTo(MyStruc{
     	Foo: "bar",
     	Spam: "eggs",
 	}))
 ```
 
-## Predefined matchers
+## Standard matchers
 
-The following table shows the predefined matchers.
+The following table shows the predefined matchers provided by `expect-go`.
 
 Matcher | Type constraints | Description
 -- | -- | --
-`Nil` | `any` | Expects a pointer to be `nil`
-`NotNil` | `any` | Expects a pointer to be non `nil`
-`Equal` | `comparable` | Compares given and wanted for equality using the go `==` operator.
-`DeepEqual` | `any` | Compares given and wanted for deep equality using reflection.
-`NoError` | `error` | Expects the given error value to be `nil`.
-`Error` | `error` | Expects that the given error to be a non-`nil` error that is of the given target error by using `errors.Is` 
-`Len` | `string`, `array`, `slice`, `map`, `channel` | Expects the length of the given value to equal a given length
-`MapContaining` | `map` | Expects the given value to be a map containing a given key, value pair
-`SliceContaining` | `slice` | Expects the given value to be a slice containing a given set of values in any order
-`SliceContainingInOrder` | `slice` | Expects the given value to be a slice containing a given list of values in given order
-`StringContaining` | `string` | Expects the given value to be a string containing a given substring
-`StringHavingPrefix` | `string` | Expects the given value to be a string having a given prefix
-`StringHavingSuffix` | `string` | Expects the given value to be a string having a given suffix
+`IsNil` | `any` | Expects a pointer to be `nil`
+`IsNotNil` | `any` | Expects a pointer to be non `nil`
+`IsEqualTo` | `comparable` | Compares given and wanted for equality using the go `==` operator.
+`IsDeepEqualTo` | `any` | Compares given and wanted for deep equality using reflection.
+`IsNoError` | `error` | Expects the given error value to be `nil`.
+`IsError` | `error` | Expects that the given error to be a non-`nil` error that is of the given target error by using `errors.Is` 
+`HasLenOf` | `string`, `array`, `slice`, `map`, `channel` | Expects the length of the given value to equal a given length
+`IsMapContaining` | `map` | Expects the given value to be a map containing a given key, value pair
+`IsSliceContaining` | `slice` | Expects the given value to be a slice containing a given set of values in any order
+`IsSliceContainingInOrder` | `slice` | Expects the given value to be a slice containing a given list of values in given order
+`IsStringContaining` | `string` | Expects the given value to be a string containing a given substring
+`IsStringHavingPrefix` | `string` | Expects the given value to be a string having a given prefix
+`IsStringHavingSuffix` | `string` | Expects the given value to be a string having a given suffix
 
 ### Deep equality
 
-The `DeepEqual` matcher is special as compared to the other ones. It uses a recursive algorithm to compare the
-given values deeply traversing nested structures. It handles all primitive types, interfaces, maps, slices,
+The `IsDeepEqualTo` matcher is special as compared to the other ones. It uses a recursive algorithm to compare
+the given values deeply traversing nested structures. It handles all primitive types, interfaces, maps, slices,
 arrays and structs. It reports all differences found so test failures are easy to track down.
 
 The equality checking algorithm can be customized on a per-matcher-invocation level using any of the following
-options. All options must be given to the `DeepEqual` matcher:
+options. All options must be given to the `IsDeepEqualTo` matcher:
 
 ```go
-ExpectThat(t, map[string]int{}).
-	Is(DeepEqual(map[string]int(nil), NilMapsAreEmpty(false)))
+ExpectThat(t, map[string]int{},
+	IsDeepEqualTo(map[string]int(nil), NilMapsAreEmpty(false)))
 ```
-
 
 #### Floatint point precision
 
@@ -153,12 +163,20 @@ got := deepEquals(first, second, ExcludeFields{
 })
 ```
 
+
+
 ## Defining you own matcher
 
 Defining you own matcher is very simple: Implement a type that implements the `Matcher` interface which
-contains a single method: `Match`. The method receives a `Context` and the actual value. Perform the matching
-steps and call `Fail` of `Failf` from the `Context` to fail the test with a given message. As most matchers
-can be implemented by a closure function, `expect-go` provides the `MatcherFunc` convenience type.
+contains a single method: `Match`. The method receives a `TB` and the actual value (for internal testability)
+this module defines a `TB` interface which is a striped-down version of `testing.TB`.
+
+Perform the matching steps and invoke any method on `TB` to log a message and/or fail the test. Matchers are
+encouraged to use `Error` and `Errorf` as this will work with both `ExpectThat` and `EnsureThat` (internally,
+`EnsureThat` just uses a delegate wrapper for `TB`, which delegate `Error` to `Fail` ...).
+
+As most matchers can be implemented by a closure function, `expect-go` provides the `MatcherFunc` convenience
+type. Almost all built-in matchers are implemented using `MatcherFunc`.
 
 The following example shows how to implement a matcher for asserting that a given number is even. The example
 uses generics to handle all kinds of integral numbers.
@@ -168,54 +186,43 @@ type Mod interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64
 }
 
-func Even[M Mod]() Matcher {
-	return MatcherFunc(func(ctx Context, got any) {
-		g, ok := got.(M)
-		if !ok {
-			ctx.Failf("expected <%v> to be of type <%T>", got, g)
-			return
-		}
-
-		if g%2 != 0 {
-			ctx.Failf("expected <%v> to be even", got)
+func IsEven[G Mod]() Matcher[G] {
+	return MatcherFunc[G](func(t TB, got G) {
+		if got%2 != 0 {
+			t.Errorf("expected <%v> to be even", got)
 		}
 	})
 }
 
 func TestCustomMatcher(t *testing.T) {
 	var i int = 22
-	ExpectThat(t, i).Is(Even[int]())
+	ExpectThat(t, i, IsEven[int]())
 }
 ```
 
 This example creates a type constraint interface assembling a union of all the number types a modulo operation
-is useful for. It then defines a generic factory function `Even` to create a custom matcher for a given
-integral type implemented as a closure using the `MatcherFunc` type. 
+is useful for. It then defines a generic factory function `IsEven` to create a custom matcher for a given
+integral type implemented as a closure using the `MatcherFunc` type. Note how the naming `IsEven` supports the
+fluent style of the expectations.
 
 Note that we need to specify the generic type argument when using the matcher. This is due to the fact, that 
-`Even` is not accepting any kind of argument. Hopefully, a later version of the go compiler will be able to 
+`IsEven` is not accepting any kind of argument. Hopefully, a later version of the go compiler will be able to 
 interfer the type argument based on the context it is used in. 
 
 We can rewrite this matcher to be a little bit more versatile, we get the following:
 
 ```go
-func DivisableBy[M Mod](d M) Matcher {
-	return MatcherFunc(func(ctx Context, got any) {
-		g, ok := got.(M)
-		if !ok {
-			ctx.Failf("expected <%v> to be of type <%T>", got, g)
-			return
-		}
-
-		if g%d != 0 {
-			ctx.Failf("expected <%v> to be divisable by <%v>", got, d)
+func IsDivisableBy[G Mod](d G) Matcher[G] {
+	return MatcherFunc[G](func(t TB, got G) {
+		if got%d != 0 {
+			t.Errorf("expected <%v> to be divisable by <%v>", got, d)
 		}
 	})
 }
 
 func TestCustomMatcher2(t *testing.T) {
 	var i int = 22
-	ExpectThat(t, i).Is(DivisableBy(2))
+	ExpectThat(t, i, IsDivisableBy(2))
 }
 ```
 
@@ -223,7 +230,7 @@ As you can see here, there is no need to specify any generic arguments.
 
 # License
 
-Copyright 2022 Alexander Metzner.
+Copyright 2022, 2023 Alexander Metzner.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
