@@ -239,5 +239,5 @@ limitations under the License.
 [go-report-card-url]: https://goreportcard.com/report/github.com/halimath/expect
 [package-doc-img-url]: https://img.shields.io/badge/GoDoc-Reference-blue.svg
 [package-doc-url]: https://pkg.go.dev/github.com/halimath/expect
-[release-img-url]: https://img.shields.io/github/v/release/halimath/expect-go.svg
+[release-img-url]: https://img.shields.io/github/v/release/halimath/expect.svg
 [release-url]: https://github.com/halimath/expect/releases
