@@ -1,10 +1,9 @@
-# expect-go
+# expect
 
 ![CI Status][ci-img-url] 
 [![Go Report Card][go-report-card-img-url]][go-report-card-url] 
 [![Package Doc][package-doc-img-url]][package-doc-url] 
 [![Releases][release-img-url]][release-url]
-
 
 A library for writing test expectations using golang 1.18 generics to provide a fluent, readable and type-safe 
 expectations.
@@ -14,88 +13,111 @@ expectations.
 This module uses golang modules and can be installed with
 
 ```shell
-go get github.com/halimath/expect-go@main
+go get github.com/halimath/expect@main
 ```
+
+## A note on upgrades
+
+This module previously used the module path `get github.com/halimath/expect-go`, preferred dot imports and
+used a different API. If you are upgrading please keep in mind to use the new import path in addition to all
+the api changes.
 
 # Usage in tests
 
-`expect-go` is intended to be "dot imported" into your tests. This makes all the exported functions and 
-matchers directly available leading to very fluent and readable expectations:
+`expect` provides two packages
 
 ```go
-import . "github.com/halimath/expect-go"
+import "github.com/halimath/expect"
 ```
 
-All following example assume the dot import.
+imports the core framework and
+
+```go
+import "github.com/halimath/expect/is"
+```
+
+imports the bundled expectations.
 
 The following example demonstates the basic use:
 
 ```go
-ExpectThat(t, got,
-	IsDeepEqualTo(MyStruc{
+expect.That(t, 
+	is.DeepEqualTo(got, MyStruc{
     	Foo: "bar",
     	Spam: "eggs",
-	}))
-```
-
-Expectations are written using `ExpectThat` passing in either a `testing.T` or a `testing.B` followed by the
-actual value and zero or more matchers (passing in zero results in a no-op). Here is a somewhat more complex
-expectation:
-
-```go
-actual := []int{2, 3, 5, 7, 11, 13, 17, 19}
-
-ExpectThat(t, actual,
-	HasLenOf[[]int](8),
-	IsSliceContainingInOrder(5, 7, 13),
+	}),
 )
 ```
 
-`ExpectThat` will execute all matchers in order and report all errors. Any matcher that produces a negative
-result causes the test to fail at the end. 
+Throughout the examples as well as the source code, we use the term _got_ to represent the value _gotten_ from
+some operation under test (the _actual_ value). We use the term _want_ to describe the _wanted_ (or 
+_expected_) value to compare to.
 
-If you want to fail a test immediately, use `EnsureThat` which has the same signature:
+Expectations are written using `expect.That` passing in either a `testing.T`, `testing.B` or `testing.F`
+followed by a variable number of `expect.Expectation` values (passing in zero results in a no-op). Here is a
+somewhat more complex expectation chain:
 
 ```go
-EnsureThat(t, got,
-	IsDeepEqualTo(MyStruc{
-    	Foo: "bar",
-    	Spam: "eggs",
-	}))
+got := []int{2, 3, 5, 7, 11, 13, 17, 19}
+
+expect.That(t,
+	is.SliceOfLen(got, 8),
+	is.SliceContainingInOrder(got, 5, 7, 13),
+)
 ```
 
-## Standard matchers
+`expect.That` will execute all expectations in order and report all errors - it behaves just like regular
+calls to `t.Error`. All failed expecations will be reported at the very end of the test.
 
-The following table shows the predefined matchers provided by `expect-go`.
+If you want to fail a test immediately - i.e. calling `t.FailNow()` or `t.Fatal(...)`, use the `FailNow` 
+decorator to wrap the expectations. You can combine them with regular onces.
 
-Matcher | Type constraints | Description
+```go
+got, err := doSomething()
+
+expect.That(t
+	expect.FailNow(is.NoError(err)),
+	is.DeepEqualTo(got, MyStruc{
+    	Foo: "bar",
+    	Spam: "eggs",
+	}),
+)
+```
+
+## Standard expectations
+
+The following table shows the predefined expectations provided by `expect`.
+
+Expectation | Type constraints | Description
 -- | -- | --
-`IsNil` | `any` | Expects a pointer to be `nil`
-`IsNotNil` | `any` | Expects a pointer to be non `nil`
-`IsEqualTo` | `comparable` | Compares given and wanted for equality using the go `==` operator.
-`IsDeepEqualTo` | `any` | Compares given and wanted for deep equality using reflection.
-`IsNoError` | `error` | Expects the given error value to be `nil`.
-`IsError` | `error` | Expects that the given error to be a non-`nil` error that is of the given target error by using `errors.Is` 
-`HasLenOf` | `string`, `array`, `slice`, `map`, `channel` | Expects the length of the given value to equal a given length
-`IsMapContaining` | `map` | Expects the given value to be a map containing a given key, value pair
-`IsSliceContaining` | `slice` | Expects the given value to be a slice containing a given set of values in any order
-`IsSliceContainingInOrder` | `slice` | Expects the given value to be a slice containing a given list of values in given order
-`IsStringContaining` | `string` | Expects the given value to be a string containing a given substring
-`IsStringHavingPrefix` | `string` | Expects the given value to be a string having a given prefix
-`IsStringHavingSuffix` | `string` | Expects the given value to be a string having a given suffix
+`is.EqualTo` | `comparable` | Compares given and wanted for equality using the go `==` operator.
+`is.DeepEqualTo` | `any` | Compares given and wanted for deep equality using reflection.
+`is.NoError` | `error` | Expects the given error value to be `nil`.
+`is.Error` | `error` | Expects that the given error to be a non-`nil` error that is of the given target error by using `errors.Is` 
+`is.MapOfLen` | `map` | Expects the given value to be a map containing the given number of entries
+`is.MapContaining` | `map` | Expects the given value to be a map containing a given key, value pair
+`is.SliceOfLen` | `slice` | Expects the given value to be a slice containing the given number of values
+`is.SliceContaining` | `slice` | Expects the given value to be a slice containing a given set of values in any order
+`is.SliceContainingInOrder` | `slice` | Expects the given value to be a slice containing a given list of values in given order
+`is.StringOfLen` | `string` | Expects the given value to be a string containing the given number of bytes (not neccessarily runes)
+`is.StringContaining` | `string` | Expects the given value to be a string containing a given substring
+`is.StringHavingPrefix` | `string` | Expects the given value to be a string having a given prefix
+`is.StringHavingSuffix` | `string` | Expects the given value to be a string having a given suffix
 
 ### Deep equality
 
-The `IsDeepEqualTo` matcher is special as compared to the other ones. It uses a recursive algorithm to compare
-the given values deeply traversing nested structures. It handles all primitive types, interfaces, maps, slices,
-arrays and structs. It reports all differences found so test failures are easy to track down.
+The `is.DeepEqualTo` expectation is special as compared to the other ones. It uses a recursive algorithm to 
+compare the given values deeply traversing nested structures using reflection. It handles all primitive types,
+interfaces, maps, slices, arrays and structs. It reports all differences found so test failures are easy to
+track down.
 
-The equality checking algorithm can be customized on a per-matcher-invocation level using any of the following
-options. All options must be given to the `IsDeepEqualTo` matcher:
+The equality checking algorithm can be customized on a per-expectation-invocation level using any of the
+following options. All options must be given to the `is.DeepEqualTo` call:
 
 ```go
-ExpectThat(t, map[string]int{},
-	IsDeepEqualTo(map[string]int(nil), NilMapsAreEmpty(false)))
+expect.That(t,
+	is.DeepEqualTo(map[string]int{}, map[string]int(nil), NilMapsAreEmpty(false)),
+)
 ```
 
 #### Floatint point precision
@@ -157,76 +179,46 @@ second := root{
 	},
 }
 
-got := deepEquals(first, second, ExcludeFields{
+is.DeepEqualTo(first, second, ExcludeFields{
 	".sliceField[*].nestedField",
 	".mapField[spam]",
 })
 ```
 
+## Defining you own expectation
 
+Defining you own expectation is very simple: Implement a type that implements the `expect.Expecation` 
+interface which contains a single method: `Expect`. The method receives a `expect.TB` value which is a 
+striped-down version of `testing.TB` (`testing.TB` contains an unexported method and thus cannot be mocked
+in external tests).
 
-## Defining you own matcher
+Perform the matching steps and invoke any method on `expect.TB` to log a message and/or fail the test.
+Matchers are encouraged to use `Error`, `Errorf` or `Fail` and leave `Fatal`, `Fatalf` an `FailNow` to the
+`expect.FailNow` decorator. This ensures your're expecations are as flexible as the standard ones.
+Nevertheless, if your expectation are always meant to fail the test now, its totatly safe to invoke `FailNow`
+and get exactly that behavior.
 
-Defining you own matcher is very simple: Implement a type that implements the `Matcher` interface which
-contains a single method: `Match`. The method receives a `TB` and the actual value (for internal testability)
-this module defines a `TB` interface which is a striped-down version of `testing.TB`.
+As most expecations can be implemented by a closure function, `expect` provides the `expect.ExpectFunc`
+convenience type. Almost all built-in matchers are implemented using `ExpectFunc`.
 
-Perform the matching steps and invoke any method on `TB` to log a message and/or fail the test. Matchers are
-encouraged to use `Error` and `Errorf` as this will work with both `ExpectThat` and `EnsureThat` (internally,
-`EnsureThat` just uses a delegate wrapper for `TB`, which delegate `Error` to `Fail` ...).
-
-As most matchers can be implemented by a closure function, `expect-go` provides the `MatcherFunc` convenience
-type. Almost all built-in matchers are implemented using `MatcherFunc`.
-
-The following example shows how to implement a matcher for asserting that a given number is even. The example
-uses generics to handle all kinds of integral numbers.
+The following example shows how to implement an expectation for asserting that a given number is even. The
+example uses generics to handle all kinds of integral numbers and uses a constraint interface from the
+[golang.org/x/exp/constraints](https://pkg.go.dev/golang.org/x/exp/constraints) module.
 
 ```go
-type Mod interface {
-	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64
-}
-
-func IsEven[G Mod]() Matcher[G] {
-	return MatcherFunc[G](func(t TB, got G) {
+func IsEven[T constraints.Integer](got T) expect.Expectation {
+	return expect.ExpectFunc(func(t expect.TB) {
 		if got%2 != 0 {
 			t.Errorf("expected <%v> to be even", got)
 		}
 	})
 }
 
-func TestCustomMatcher(t *testing.T) {
+func TestSomething(t *testing.T) {
 	var i int = 22
-	ExpectThat(t, i, IsEven[int]())
+	expect.That(t, IsEven(i))
 }
 ```
-
-This example creates a type constraint interface assembling a union of all the number types a modulo operation
-is useful for. It then defines a generic factory function `IsEven` to create a custom matcher for a given
-integral type implemented as a closure using the `MatcherFunc` type. Note how the naming `IsEven` supports the
-fluent style of the expectations.
-
-Note that we need to specify the generic type argument when using the matcher. This is due to the fact, that 
-`IsEven` is not accepting any kind of argument. Hopefully, a later version of the go compiler will be able to 
-interfer the type argument based on the context it is used in. 
-
-We can rewrite this matcher to be a little bit more versatile, we get the following:
-
-```go
-func IsDivisableBy[G Mod](d G) Matcher[G] {
-	return MatcherFunc[G](func(t TB, got G) {
-		if got%d != 0 {
-			t.Errorf("expected <%v> to be divisable by <%v>", got, d)
-		}
-	})
-}
-
-func TestCustomMatcher2(t *testing.T) {
-	var i int = 22
-	ExpectThat(t, i, IsDivisableBy(2))
-}
-```
-
-As you can see here, there is no need to specify any generic arguments.
 
 # License
 
@@ -242,10 +234,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[ci-img-url]: https://github.com/halimath/expect-go/workflows/CI/badge.svg
-[go-report-card-img-url]: https://goreportcard.com/badge/github.com/halimath/expect-go
-[go-report-card-url]: https://goreportcard.com/report/github.com/halimath/expect-go
+[ci-img-url]: https://github.com/halimath/expect/workflows/CI/badge.svg
+[go-report-card-img-url]: https://goreportcard.com/badge/github.com/halimath/expect
+[go-report-card-url]: https://goreportcard.com/report/github.com/halimath/expect
 [package-doc-img-url]: https://img.shields.io/badge/GoDoc-Reference-blue.svg
-[package-doc-url]: https://pkg.go.dev/github.com/halimath/expect-go
+[package-doc-url]: https://pkg.go.dev/github.com/halimath/expect
 [release-img-url]: https://img.shields.io/github/v/release/halimath/expect-go.svg
-[release-url]: https://github.com/halimath/expect-go/releases
+[release-url]: https://github.com/halimath/expect/releases

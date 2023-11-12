@@ -1,3 +1,3 @@
-module github.com/halimath/expect-go
+module github.com/halimath/expect
 
 go 1.18

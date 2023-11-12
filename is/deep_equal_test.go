@@ -1,24 +1,27 @@
-package expect
+package is
 
 import (
 	"errors"
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/halimath/expect/internal/testhelper"
 )
 
 func TestDeepEqual(t *testing.T) {
-	var tm tbMock
+	var tb testhelper.TB
 
-	IsDeepEqualTo("foo").Match(&tm, "foo")
-	IsDeepEqualTo("foo").Match(&tm, "bar")
+	DeepEqualTo("foo", "foo").Expect(&tb)
+	DeepEqualTo("bar", "foo").Expect(&tb)
 
-	want := tbMock{
-		errors: []string{"values are not deeply equal:\n  want: foo\n   got: bar"},
+	want := testhelper.TB{
+		ErrFlag: true,
+		Logs:    []string{"values are not deeply equal:\n  want: foo\n   got: bar"},
 	}
 
-	if !reflect.DeepEqual(tm, want) {
-		t.Errorf("unexpected failures:\n%s\n%s", want, tm)
+	if !reflect.DeepEqual(tb, want) {
+		t.Errorf("unexpected failures:\n%v\n%v", want, tb)
 	}
 }
 
