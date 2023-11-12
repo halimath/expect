@@ -1,4 +1,4 @@
-package expect
+package is
 
 import (
 	"fmt"
@@ -7,7 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/halimath/expect-go/internal/set"
+	"github.com/halimath/expect"
+	"github.com/halimath/expect/internal/set"
 )
 
 // DeepEqualOpt defines an interface for types that can be used as options
@@ -62,8 +63,8 @@ func (ExcludeFields) deepEqualOpt() {}
 
 // IsDeepEqualTo asserts that given and wanted value are deeply equal by using reflection to inspect and dive
 // into nested structures.
-func IsDeepEqualTo[T any](want T, opts ...DeepEqualOpt) Matcher[T] {
-	return MatcherFunc[T](func(t TB, got T) {
+func DeepEqualTo[T any](got, want T, opts ...DeepEqualOpt) expect.Expectation {
+	return expect.ExpectFunc(func(t expect.TB) {
 		t.Helper()
 
 		if diff := deepEquals(want, got, opts...); diff != nil {
