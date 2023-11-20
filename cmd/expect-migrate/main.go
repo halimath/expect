@@ -18,7 +18,6 @@ import (
 	"go/token"
 	"io"
 	"os"
-	"slices"
 	"strconv"
 )
 
@@ -161,7 +160,7 @@ func (v *expectationRewriteVisitor) removeMarkedStatments(currentBlock *blockFra
 	stmts := make([]ast.Stmt, 0, len(currentBlock.block.List))
 
 	for i := range currentBlock.block.List {
-		if !slices.Contains(currentBlock.stmtsToRemove, i) {
+		if !contains(currentBlock.stmtsToRemove, i) {
 			stmts = append(stmts, currentBlock.block.List[i])
 		}
 	}
@@ -176,24 +175,7 @@ func (v *expectationRewriteVisitor) Visit(node ast.Node) ast.Visitor {
 
 	currentBlock, _ := v.blocks.Peek()
 
-	// if node == nil {
-	// 	if currentBlock != nil {
-	// 		if currentBlock.nestingCount == 0 {
-	// 		}
-	// 	}
-
-	// 	return nil
-	// }
-
-	// if currentBlock != nil {
-	// 	currentBlock.nestingCount++
-	// }
-
 	if b, ok := node.(*ast.BlockStmt); ok {
-		// if currentBlock != nil {
-		// 	currentBlock.nestingCount--
-		// }
-
 		v.blocks.Push(&blockFrame{
 			block:            b,
 			currentStmtIndex: -1,
@@ -236,7 +218,7 @@ func (v *expectationRewriteVisitor) Visit(node ast.Node) ast.Visitor {
 		return v
 	}
 
-	if !slices.Contains(chainingMethodNames, sel.Sel.Name) {
+	if !contains(chainingMethodNames, sel.Sel.Name) {
 		if currentBlock != nil {
 			currentBlock.lastExpectation = nil
 		}
@@ -292,7 +274,6 @@ func (v *expectationRewriteVisitor) Visit(node ast.Node) ast.Visitor {
 	if len(expectThatCall.Args) != 2 {
 		if currentBlock != nil {
 			currentBlock.lastExpectation = nil
-			// currentBlock.nestingCount--
 		}
 
 		return nil
@@ -349,7 +330,6 @@ func (v *expectationRewriteVisitor) Visit(node ast.Node) ast.Visitor {
 		currentBlock.lastExpectation = call
 	}
 
-	// currentBlock.nestingCount--
 	return nil
 }
 
@@ -378,4 +358,14 @@ func (s *Stack[T]) Peek() (v T, ok bool) {
 	v = (*s)[len(*s)-1]
 	ok = true
 	return
+}
+
+func contains[S ~[]E, E comparable](s S, v E) bool {
+	for i := range s {
+		if s[i] == v {
+			return true
+		}
+	}
+
+	return false
 }
