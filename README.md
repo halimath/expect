@@ -103,6 +103,7 @@ Expectation | Type constraints | Description
 `is.StringContaining` | `string` | Expects the given value to be a string containing a given substring
 `is.StringHavingPrefix` | `string` | Expects the given value to be a string having a given prefix
 `is.StringHavingSuffix` | `string` | Expects the given value to be a string having a given suffix
+`is.EqualToStringByLines` | `string` | Similar to EqualTo used on two strings but reports differences on a line-by-line basis
 
 ### Deep equality
 

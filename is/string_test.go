@@ -70,3 +70,28 @@ func TestStringWithSuffix(t *testing.T) {
 		t.Errorf("not expected: %#v", tb)
 	}
 }
+
+func TestEqualToStringByLines(t *testing.T) {
+	var tb testhelper.TB
+
+	EqualToStringByLines("foo\nbar", "foo\nbar").Expect(&tb)
+	EqualToStringByLines("foo\nbar", "foobar").Expect(&tb)
+	EqualToStringByLines("foo\nbar", "foo").Expect(&tb)
+	EqualToStringByLines("foo", "foo\nbar").Expect(&tb)
+	EqualToStringByLines("foo\nbar", "foo\nspam").Expect(&tb)
+
+	if !reflect.DeepEqual(tb, testhelper.TB{
+		ErrFlag: true,
+
+		Logs: []string{
+			"expected string to have 1 lines but got 2",
+			"at line 0: wanted\n\"foobar\"\nbut got\n\"foo\"",
+			"expected string to have 1 lines but got 2",
+			"line 1: wanted no line but got\n\"bar\"",
+			"expected string to have 2 lines but got 1",
+			"line 1: wanted\n\"bar\"\nbut got no line",
+			"at line 1: wanted\n\"spam\"\nbut got\n\"bar\""},
+	}) {
+		t.Errorf("not expected: %#v", tb)
+	}
+}
