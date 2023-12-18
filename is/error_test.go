@@ -28,6 +28,7 @@ func TestError(t *testing.T) {
 
 	err := errors.New("failed")
 
+	Error(nil, nil).Expect(&tm)
 	Error(nil, err).Expect(&tm)
 	Error(errors.New("other"), err).Expect(&tm)
 	Error(err, err).Expect(&tm)

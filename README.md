@@ -105,6 +105,15 @@ Expectation | Type constraints | Description
 `is.StringHavingSuffix` | `string` | Expects the given value to be a string having a given suffix
 `is.EqualToStringByLines` | `string` | Similar to EqualTo used on two strings but reports differences on a line-by-line basis
 
+### A note on error testing
+
+`expect` provides two expectations targeting `error` specificially: `is.Error` and `is.NoError`. The later one
+is straight forward and expects the given value to be `nil`. `is.Error` works by applying the standard library
+function `errors.Is` and expects the given error to contain the target error as part of its error wrapping
+chain. In addition, `is.Error` also supports the target error to be `nil`. In this case, `is.Error(v, nil)`
+behaves identical to `is.Error(v)`. This allows an easy and convenient way of writing table based tests that
+expect both error and non-error conditions.
+
 ### Deep equality
 
 The `is.DeepEqualTo` expectation is special as compared to the other ones. It uses a recursive algorithm to 
