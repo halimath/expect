@@ -197,11 +197,16 @@ func (v *expectationRewriteVisitor) Visit(node ast.Node) ast.Visitor {
 		}
 	}
 
-	if _, ok := node.(*ast.ExprStmt); ok {
+	exprStmt, ok := node.(*ast.ExprStmt)
+	if !ok {
+		if currentBlock != nil {
+			currentBlock.lastExpectation = nil
+		}
+
 		return v
 	}
 
-	call, ok := node.(*ast.CallExpr)
+	call, ok := exprStmt.X.(*ast.CallExpr)
 	if !ok {
 		if currentBlock != nil {
 			currentBlock.lastExpectation = nil
