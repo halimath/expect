@@ -22,6 +22,8 @@ func MapContaining[T ~map[K]V, K, V comparable](got T, key K, val V) expect.Expe
 // MapOfLen expects got to contain want elements.
 func MapOfLen[T ~map[K]V, K comparable, V any](got T, want int) expect.Expectation {
 	return expect.ExpectFunc(func(t expect.TB) {
+		t.Helper()
+
 		gotLen := len(got)
 		if gotLen != want {
 			t.Errorf("expected %v to have len %d but got %d", got, want, gotLen)

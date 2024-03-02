@@ -32,6 +32,8 @@ func Error(got, target error) expect.Expectation {
 // NoError expects v to be nil.
 func NoError(v error) expect.Expectation {
 	return expect.ExpectFunc(func(t expect.TB) {
+		t.Helper()
+
 		if v != nil {
 			t.Errorf("expected no error but got %q", v)
 		}
