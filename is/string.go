@@ -9,6 +9,8 @@ import (
 // StringOfLen expects got to have byte length want.
 func StringOfLen(got string, want int) expect.Expectation {
 	return expect.ExpectFunc(func(t expect.TB) {
+		t.Helper()
+
 		gotLen := len(got)
 		if gotLen != want {
 			t.Errorf("expected %q to have len %d but got %d", got, want, gotLen)
