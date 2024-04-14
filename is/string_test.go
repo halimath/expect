@@ -79,6 +79,7 @@ func TestEqualToStringByLines(t *testing.T) {
 	EqualToStringByLines("foo\nbar", "foo").Expect(&tb)
 	EqualToStringByLines("foo", "foo\nbar").Expect(&tb)
 	EqualToStringByLines("foo\nbar", "foo\nspam").Expect(&tb)
+	EqualToStringByLines("foo\n  bar", "foo\n\tbar", DedentLines).Expect(&tb)
 
 	if !reflect.DeepEqual(tb, testhelper.TB{
 		ErrFlag: true,

@@ -114,6 +114,18 @@ chain. In addition, `is.Error` also supports the target error to be `nil`. In th
 behaves identical to `is.Error(v)`. This allows an easy and convenient way of writing table based tests that
 expect both error and non-error conditions.
 
+### `EqualToStringByLines`
+
+The `EqualToStringByLines` expectation effectively works like `EqualTo` on strings. The difference arises when
+the two strings are _not_ equal. If both strings are longer, multiline strings, catching a small difference
+can be hard to do. In those situations `EqualToStringByLines` helps by reporting differences on a per-line
+basis. This makes locating the differences and fixing code/adjusting the tests much easier. In addition,
+`EqualToStringByLines` supports _transformers_ - simple functions that preprocess each line - before the
+transformation results are compared. This makes it much easisier to place expected string values in code as
+multiline raw string literals. Those string literal's lines usually follow the current indentation depth
+which makes them unequal to a (flat) given value. Using the `Dedent` transformer can easily compensate for
+this keeping the expectation indented "correcly" (which regards to code formatting) but the test won't fail.
+
 ### Deep equality
 
 The `is.DeepEqualTo` expectation is special as compared to the other ones. It uses a recursive algorithm to 
